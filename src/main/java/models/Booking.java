@@ -4,18 +4,19 @@ import java.io.Serial;
 import java.io.Serializable;
 
 public class Booking implements Serializable {
-    @Serial
     private static final long serialVersionUID = 1L;
 
     private String bookingId;
     private String sessionId;
     private Seat seat;
+    private String phoneNumber; // Добавление номера телефона
 
     // Конструкторы, геттеры и сеттеры
-    public Booking(String bookingId, String sessionId, Seat seat) {
+    public Booking(String bookingId, String sessionId, Seat seat, String phoneNumber) {
         this.bookingId = bookingId;
         this.sessionId = sessionId;
         this.seat = seat;
+        this.phoneNumber = phoneNumber;
     }
 
     public String getBookingId() {
@@ -42,12 +43,21 @@ public class Booking implements Serializable {
         this.seat = seat;
     }
 
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
     @Override
     public String toString() {
         return "Booking{" +
                 "bookingId='" + bookingId + '\'' +
                 ", sessionId='" + sessionId + '\'' +
                 ", seat=" + seat +
+                ", phoneNumber='" + phoneNumber + '\'' +
                 '}';
     }
 }

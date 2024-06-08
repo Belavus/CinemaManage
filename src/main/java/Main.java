@@ -1,5 +1,7 @@
 package main.java;
 
+import main.java.dao.HallDao;
+import main.java.models.Hall;
 import main.java.seatAllocationAlgorithm.src.BFSMaxDistanceSeatAlgorithm;
 import main.java.seatAllocationAlgorithm.src.IAlgoSeatDistribution;
 import main.java.services.CinemaService;
@@ -18,25 +20,31 @@ public class Main {
         // Инициализация DAO
         SessionDao sessionDao = new SessionDao();
         BookingDao bookingDao = new BookingDao();
+        HallDao hallDao = new HallDao();
 
         // Инициализация алгоритмического модуля
         IAlgoSeatDistribution algo = new BFSMaxDistanceSeatAlgorithm(); // Здесь нужно использовать конкретную реализацию алгоритма
 
         // Инициализация сервиса
-        CinemaService cinemaService = new CinemaService(sessionDao, bookingDao, algo);
+        CinemaService cinemaService = new CinemaService(sessionDao, bookingDao, hallDao, algo);
 
         // Пример использования сервиса
         Seat seat1 = new Seat(1, 1);
         Seat seat2 = new Seat(1, 2);
-        Session session1 = new Session("3", "Movie", "18:00", Arrays.asList(seat1, seat2));
-        Session session2 = new Session("4", "Best Movie", "19:00", Arrays.asList(seat2, seat1));
-        cinemaService.addSession(session1);
-        cinemaService.addSession(session2);
+        Session session = new Session("1", "Movie", "18:00", Arrays.asList(seat1, seat2), 1);
+        cinemaService.addSession(session);
 
-        Booking booking = new Booking("1", "1", seat1);
+        Booking booking = new Booking("1", "1", seat1, "1234567890");
         cinemaService.addBooking(booking);
+
+        Hall hall = new Hall(2, 5, 5);
+        hall.markAsVIP(1, 3);
+        hall.markAsAccessible(2, 2);
+        hall.markAsEmptySpace(3, 3);
+        cinemaService.addHall(hall);
 
         System.out.println("Все сеансы: " + cinemaService.getAllSessions());
         System.out.println("Все бронирования: " + cinemaService.getAllBookings());
+        System.out.println("Все залы: " + cinemaService.getAllHalls());
     }
 }

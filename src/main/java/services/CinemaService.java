@@ -2,11 +2,14 @@ package main.java.services;
 
 import main.java.models.Session;
 import main.java.models.Booking;
-import main.java.models.Seat;
 import main.java.dao.SessionDao;
 import main.java.dao.BookingDao;
 import main.java.seatAllocationAlgorithm.src.IAlgoSeatDistribution;
+
+import java.util.ArrayList;
 import java.util.List;
+
+import java.util.stream.Collectors;
 
 public class CinemaService {
     private SessionDao sessionDao;
@@ -25,7 +28,7 @@ public class CinemaService {
         bookingDao.initializeData();
     }
 
-    // Управление сеансами
+    // Session Managing
     public void addSession(Session session) {
         sessionDao.save(session);
     }
@@ -35,7 +38,7 @@ public class CinemaService {
     }
 
     public List<Session> getAllSessions() {
-        return sessionDao.getAll();
+        return new ArrayList<>(sessionDao.getAll().values());
     }
 
     public void updateSession(Session session) {
@@ -46,7 +49,7 @@ public class CinemaService {
         sessionDao.delete(sessionId);
     }
 
-    // Управление бронированиями
+    // Booking Managing
     public void addBooking(Booking booking) {
         bookingDao.save(booking);
     }
@@ -56,7 +59,7 @@ public class CinemaService {
     }
 
     public List<Booking> getAllBookings() {
-        return bookingDao.getAll();
+        return new ArrayList<>(bookingDao.getAll().values());
     }
 
     public void updateBooking(Booking booking) {

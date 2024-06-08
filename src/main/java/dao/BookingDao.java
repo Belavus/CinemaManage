@@ -1,83 +1,62 @@
 package main.java.dao;
 
 import main.java.models.Booking;
-import main.java.models.Seat;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class BookingDao implements IDao<Booking> {
-    private List<Booking> bookings = new ArrayList<>();
-    private final String filePath = "bookings.txt";
+    private Map<String, Booking> bookings = new HashMap<>();
+    private final String filePath = "src/main/resources/bookings.ser";
 
     @Override
     public void save(Booking booking) {
-        bookings.add(booking);
+        bookings.put(booking.getBookingId(), booking);
         saveData();
     }
 
     @Override
     public Booking get(String id) {
-        Optional<Booking> booking = bookings.stream().filter(b -> b.getBookingId().equals(id)).findFirst();
-        return booking.orElse(null);
+        return bookings.get(id);
     }
 
     @Override
-    public List<Booking> getAll() {
-        return new ArrayList<>(bookings);
+    public Map<String, Booking> getAll() {
+        return new HashMap<>(bookings);
     }
 
     @Override
     public void update(Booking booking) {
-        delete(booking.getBookingId());
-        save(booking);
+        bookings.put(booking.getBookingId(), booking);
+        saveData();
     }
 
     @Override
     public void delete(String id) {
-        bookings.removeIf(booking -> booking.getBookingId().equals(id));
+        bookings.remove(id);
         saveData();
     }
 
     @Override
     public void initializeData() {
         File file = new File(filePath);
-        if (!file.exists()) {
-            try {
-                file.createNewFile();
-            } catch (IOException e) {
+        File dir = new File("src/main/resources");
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+        if (file.exists()) {
+            try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filePath))) {
+                bookings = (Map<String, Booking>) ois.readObject();
+            } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
             }
-        }
-
-        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(",");
-                String bookingId = parts[0];
-                String sessionId = parts[1];
-                int row = Integer.parseInt(parts[2]);
-                int column = Integer.parseInt(parts[3]);
-                boolean isBooked = Boolean.parseBoolean(parts[4]);
-                Seat seat = new Seat(row, column);
-                seat.setBooked(isBooked);
-                bookings.add(new Booking(bookingId, sessionId, seat));
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
     @Override
     public void saveData() {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
-            for (Booking booking : bookings) {
-                writer.write(booking.getBookingId() + "," + booking.getSessionId() + "," + booking.getSeat().getRow() +
-                        "," + booking.getSeat().getColumn() + "," + booking.getSeat().isBooked());
-                writer.newLine();
-            }
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filePath))) {
+            oos.writeObject(bookings);
         } catch (IOException e) {
             e.printStackTrace();
         }

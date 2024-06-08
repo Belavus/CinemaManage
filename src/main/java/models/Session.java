@@ -1,14 +1,19 @@
 package main.java.models;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.List;
 
-public class Session {
+public class Session implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
+
     private String sessionId;
     private String movieName;
     private String time;
     private List<Seat> seats;
 
-    // Constructors, getters and setters
+    // Конструкторы, геттеры и сеттеры
     public Session(String sessionId, String movieName, String time, List<Seat> seats) {
         this.sessionId = sessionId;
         this.movieName = movieName;
@@ -46,6 +51,16 @@ public class Session {
 
     public void setSeats(List<Seat> seats) {
         this.seats = seats;
+    }
+
+    @Override
+    public String toString() {
+        return "Session{" +
+                "sessionId='" + sessionId + '\'' +
+                ", movieName='" + movieName + '\'' +
+                ", time='" + time + '\'' +
+                ", seats=" + seats +
+                '}';
     }
 }
 

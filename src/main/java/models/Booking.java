@@ -1,6 +1,12 @@
 package main.java.models;
 
-public class Booking {
+import java.io.Serial;
+import java.io.Serializable;
+
+public class Booking implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
+
     private String bookingId;
     private String sessionId;
     private Seat seat;
@@ -34,6 +40,15 @@ public class Booking {
 
     public void setSeat(Seat seat) {
         this.seat = seat;
+    }
+
+    @Override
+    public String toString() {
+        return "Booking{" +
+                "bookingId='" + bookingId + '\'' +
+                ", sessionId='" + sessionId + '\'' +
+                ", seat=" + seat +
+                '}';
     }
 }
 

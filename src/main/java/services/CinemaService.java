@@ -11,6 +11,11 @@ import main.java.seatAllocationAlgorithm.src.IAlgoSeatDistribution;
 import java.util.List;
 
 import java.util.stream.Collectors;
+import main.java.util.ConfigUtil;
+
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class CinemaService {
     private SessionDao sessionDao;
@@ -24,6 +29,15 @@ public class CinemaService {
         this.hallDao = hallDao;
         this.algo = algo;
         initializeData();
+    }
+
+    public CinemaService(IAlgoSeatDistribution algo) {
+        this(
+                new SessionDao(ConfigUtil.getProperty("session.file.path")),
+                new BookingDao(ConfigUtil.getProperty("booking.file.path")),
+                new HallDao(ConfigUtil.getProperty("hall.file.path")),
+                algo
+        );
     }
 
     private void initializeData() {
@@ -100,4 +114,3 @@ public class CinemaService {
         return algo.findBestSeats(seatLayout, numberOfSeats, preference);
     }
 }
-

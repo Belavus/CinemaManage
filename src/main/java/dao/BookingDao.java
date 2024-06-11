@@ -7,7 +7,11 @@ import java.util.Map;
 
 public class BookingDao implements IDao<Booking> {
     private Map<String, Booking> bookings = new HashMap<>();
-    private final String filePath = "src/main/resources/bookings.ser";
+    private final String filePath;
+
+    public BookingDao(String filePath) {
+        this.filePath = filePath;
+    }
 
     @Override
     public void save(Booking booking) {
@@ -40,10 +44,6 @@ public class BookingDao implements IDao<Booking> {
     @Override
     public void initializeData() {
         File file = new File(filePath);
-        File dir = new File("src/main/resources");
-        if (!dir.exists()) {
-            dir.mkdirs();
-        }
         if (file.exists()) {
             try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filePath))) {
                 bookings = (Map<String, Booking>) ois.readObject();

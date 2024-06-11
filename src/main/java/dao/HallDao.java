@@ -8,7 +8,11 @@ import java.util.Map;
 
 public class HallDao implements IDao<Hall> {
     private Map<Integer, Hall> halls = new HashMap<>();
-    private final String filePath = "src/main/resources/halls.ser";
+    private final String filePath;
+
+    public HallDao(String filePath) {
+        this.filePath = filePath;
+    }
 
     @Override
     public void save(Hall hall) {
@@ -45,10 +49,6 @@ public class HallDao implements IDao<Hall> {
     @Override
     public void initializeData() {
         File file = new File(filePath);
-        File dir = new File("src/main/resources");
-        if (!dir.exists()) {
-            dir.mkdirs();
-        }
         if (file.exists()) {
             try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filePath))) {
                 halls = (Map<Integer, Hall>) ois.readObject();
@@ -67,4 +67,3 @@ public class HallDao implements IDao<Hall> {
         }
     }
 }
-

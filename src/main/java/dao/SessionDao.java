@@ -1,15 +1,18 @@
 package main.java.dao;
 
-import main.java.models.Seat;
 import main.java.models.Session;
 import java.io.*;
-
 import java.util.HashMap;
 import java.util.Map;
 
+
 public class SessionDao implements IDao<Session> {
     private Map<String, Session> sessions = new HashMap<>();
-    private final String filePath = "src/main/resources/sessions.ser";
+    private final String filePath;
+
+    public SessionDao(String filePath) {
+        this.filePath = filePath;
+    }
 
     @Override
     public void save(Session session) {
@@ -42,10 +45,6 @@ public class SessionDao implements IDao<Session> {
     @Override
     public void initializeData() {
         File file = new File(filePath);
-        File dir = new File("src/main/resources");
-        if (!dir.exists()) {
-            dir.mkdirs();
-        }
         if (file.exists()) {
             try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filePath))) {
                 sessions = (Map<String, Session>) ois.readObject();

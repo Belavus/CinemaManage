@@ -1,6 +1,5 @@
 package main.java;
 
-import main.java.dao.HallDao;
 import main.java.models.Hall;
 import main.java.seatAllocationAlgorithm.src.BFSMaxDistanceSeatAlgorithm;
 import main.java.seatAllocationAlgorithm.src.IAlgoSeatDistribution;
@@ -8,8 +7,6 @@ import main.java.services.CinemaService;
 import main.java.models.Session;
 import main.java.models.Seat;
 import main.java.models.Booking;
-import main.java.dao.SessionDao;
-import main.java.dao.BookingDao;
 import java.util.Arrays;
 
 public class Main {
@@ -17,16 +14,9 @@ public class Main {
         // Вывод текущей рабочей директории
         System.out.println("Current working directory: " + System.getProperty("user.dir"));
 
-        // Инициализация DAO
-        SessionDao sessionDao = new SessionDao();
-        BookingDao bookingDao = new BookingDao();
-        HallDao hallDao = new HallDao();
-
-        // Инициализация алгоритмического модуля
+        // Использование путей из конфигурационного файла
         IAlgoSeatDistribution algo = new BFSMaxDistanceSeatAlgorithm(); // Здесь нужно использовать конкретную реализацию алгоритма
-
-        // Инициализация сервиса
-        CinemaService cinemaService = new CinemaService(sessionDao, bookingDao, hallDao, algo);
+        CinemaService cinemaService = new CinemaService(algo);
 
         // Пример использования сервиса
         Seat seat1 = new Seat(1, 1);
@@ -37,8 +27,8 @@ public class Main {
         Booking booking = new Booking("1", "1", seat1, "1234567890");
         cinemaService.addBooking(booking);
 
-        Hall hall = new Hall(2, 5, 5);
-        hall.markAsVIP(1, 3);
+        Hall hall = new Hall(1, 5, 5);
+        hall.markAsVIP(1, 1);
         hall.markAsAccessible(2, 2);
         hall.markAsEmptySpace(3, 3);
         cinemaService.addHall(hall);

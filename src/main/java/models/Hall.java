@@ -10,14 +10,14 @@ public class Hall implements Serializable {
     private int hallNumber;
     private int[][] layout;
 
-    // Константы для типов мест
+    // Constants
     public static final int EMPTY = 0;
     public static final int OCCUPIED = 1;
     public static final int EMPTY_SPACE = 3;
     public static final int VIP = 4;
     public static final int ACCESSIBLE = 5;
 
-    // Конструктор, геттеры и сеттеры
+    // Constructors, getters, setters
     public Hall(int hallNumber, int rows, int columns) {
         this.hallNumber = hallNumber;
         this.layout = new int[rows][columns];

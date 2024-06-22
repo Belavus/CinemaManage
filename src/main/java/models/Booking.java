@@ -9,9 +9,9 @@ public class Booking implements Serializable {
     private String bookingId;
     private String sessionId;
     private Seat seat;
-    private String phoneNumber; // Добавление номера телефона
+    private String phoneNumber;
 
-    // Конструкторы, геттеры и сеттеры
+    // Constructors, getters, setters
     public Booking(String bookingId, String sessionId, Seat seat, String phoneNumber) {
         this.bookingId = bookingId;
         this.sessionId = sessionId;

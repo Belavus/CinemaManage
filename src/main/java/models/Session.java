@@ -2,6 +2,7 @@ package main.java.models;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Session implements Serializable {
@@ -11,16 +12,17 @@ public class Session implements Serializable {
     private String movieName;
     private String time;
     private List<Seat> seats;
-    private int hallNumber; // Добавление номера зала
+    private int hallNumber;
 
-    // Конструкторы, геттеры и сеттеры
     public Session(String sessionId, String movieName, String time, List<Seat> seats, int hallNumber) {
         this.sessionId = sessionId;
         this.movieName = movieName;
         this.time = time;
-        this.seats = seats;
+        this.seats = seats != null ? new ArrayList<>(seats) : new ArrayList<>();
         this.hallNumber = hallNumber;
     }
+
+    // Getters and setters...
 
     public String getSessionId() {
         return sessionId;
@@ -47,11 +49,11 @@ public class Session implements Serializable {
     }
 
     public List<Seat> getSeats() {
-        return seats;
+        return new ArrayList<>(seats);
     }
 
     public void setSeats(List<Seat> seats) {
-        this.seats = seats;
+        this.seats = new ArrayList<>(seats);
     }
 
     public int getHallNumber() {
@@ -60,6 +62,18 @@ public class Session implements Serializable {
 
     public void setHallNumber(int hallNumber) {
         this.hallNumber = hallNumber;
+    }
+
+    // Method to add a seat
+    public void addSeat(Seat seat) {
+        if (!seats.contains(seat)) {
+            seats.add(seat);
+        }
+    }
+
+    // Method to remove a seat
+    public void removeSeat(Seat seat) {
+        seats.remove(seat);
     }
 
     @Override

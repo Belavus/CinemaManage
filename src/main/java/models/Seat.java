@@ -2,6 +2,7 @@ package main.java.models;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.Objects;
 
 public class Seat implements Serializable {
     @Serial
@@ -11,7 +12,7 @@ public class Seat implements Serializable {
     private int column;
     private boolean isBooked;
 
-    // Конструкторы, геттеры и сеттеры
+    // Constructors, getters, setters
     public Seat(int row, int column) {
         this.row = row;
         this.column = column;
@@ -38,8 +39,21 @@ public class Seat implements Serializable {
         return isBooked;
     }
 
-    public void setBooked(boolean isBooked) {
-        this.isBooked = isBooked;
+    public void setBooked(boolean booked) {
+        isBooked = booked;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Seat seat = (Seat) o;
+        return row == seat.row && column == seat.column;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(row, column);
     }
 
     @Override

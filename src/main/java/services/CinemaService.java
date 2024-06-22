@@ -1,27 +1,24 @@
 package main.java.services;
 
-import main.java.dao.HallDao;
 import main.java.models.Hall;
 import main.java.models.Session;
 import main.java.models.Booking;
+import main.java.dao.HallDao;
 import main.java.dao.SessionDao;
 import main.java.dao.BookingDao;
+import main.java.util.ConfigUtil;
 import main.java.seatAllocationAlgorithm.src.IAlgoSeatDistribution;
 
 import java.util.List;
-
 import java.util.stream.Collectors;
-import main.java.util.ConfigUtil;
-
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.concurrent.locks.ReentrantReadWriteLock; //synchronization for critical sections
 
 public class CinemaService {
-    private SessionDao sessionDao;
-    private BookingDao bookingDao;
-    private HallDao hallDao;
-    private IAlgoSeatDistribution algo;
+    private final SessionDao sessionDao;
+    private final BookingDao bookingDao;
+    private final HallDao hallDao;
+    private final IAlgoSeatDistribution algo;
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
     public CinemaService(SessionDao sessionDao, BookingDao bookingDao, HallDao hallDao, IAlgoSeatDistribution algo) {
         this.sessionDao = sessionDao;
@@ -40,77 +37,158 @@ public class CinemaService {
         );
     }
 
+    // Initialize data from files
     private void initializeData() {
         sessionDao.initializeData();
         bookingDao.initializeData();
         hallDao.initializeData();
     }
 
-    // Управление сеансами
+    // Manage sessions
     public void addSession(Session session) {
-        sessionDao.save(session);
+        lock.writeLock().lock();
+        try {
+            sessionDao.save(session);
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     public Session getSession(String sessionId) {
-        return sessionDao.get(sessionId);
+        lock.readLock().lock();
+        try {
+            return sessionDao.get(sessionId);
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
     public List<Session> getAllSessions() {
-        return sessionDao.getAll().values().stream().collect(Collectors.toList());
+        lock.readLock().lock();
+        try {
+            return sessionDao.getAll().values().stream().collect(Collectors.toList());
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
     public void updateSession(Session session) {
-        sessionDao.update(session);
+        lock.writeLock().lock();
+        try {
+            sessionDao.update(session);
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     public void deleteSession(String sessionId) {
-        sessionDao.delete(sessionId);
+        lock.writeLock().lock();
+        try {
+            sessionDao.delete(sessionId);
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
-    // Управление бронированиями
+    // Manage bookings
     public void addBooking(Booking booking) {
-        bookingDao.save(booking);
+        lock.writeLock().lock();
+        try {
+            bookingDao.save(booking);
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     public Booking getBooking(String bookingId) {
-        return bookingDao.get(bookingId);
+        lock.readLock().lock();
+        try {
+            return bookingDao.get(bookingId);
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
     public List<Booking> getAllBookings() {
-        return bookingDao.getAll().values().stream().collect(Collectors.toList());
+        lock.readLock().lock();
+        try {
+            return bookingDao.getAll().values().stream().collect(Collectors.toList());
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
     public void updateBooking(Booking booking) {
-        bookingDao.update(booking);
+        lock.writeLock().lock();
+        try {
+            bookingDao.update(booking);
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     public void deleteBooking(String bookingId) {
-        bookingDao.delete(bookingId);
+        lock.writeLock().lock();
+        try {
+            bookingDao.delete(bookingId);
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
-    // Управление залами
+    // Manage halls
     public void addHall(Hall hall) {
-        hallDao.save(hall);
+        lock.writeLock().lock();
+        try {
+            hallDao.save(hall);
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     public Hall getHall(int hallNumber) {
-        return hallDao.get(String.valueOf(hallNumber));
+        lock.readLock().lock();
+        try {
+            return hallDao.get(String.valueOf(hallNumber));
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
     public List<Hall> getAllHalls() {
-        return hallDao.getAll().values().stream().collect(Collectors.toList());
+        lock.readLock().lock();
+        try {
+            return hallDao.getAll().values().stream().collect(Collectors.toList());
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
     public void updateHall(Hall hall) {
-        hallDao.update(hall);
+        lock.writeLock().lock();
+        try {
+            hallDao.update(hall);
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     public void deleteHall(int hallNumber) {
-        hallDao.delete(String.valueOf(hallNumber));
+        lock.writeLock().lock();
+        try {
+            hallDao.delete(String.valueOf(hallNumber));
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
-    // Алгоритм распределения мест
+    // Seat allocation algorithm
     public int[] findBestSeats(int[][] seatLayout, int numberOfSeats, int preference) {
-        return algo.findBestSeats(seatLayout, numberOfSeats, preference);
+        lock.readLock().lock();
+        try {
+            return algo.findBestSeats(seatLayout, numberOfSeats, preference);
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 }

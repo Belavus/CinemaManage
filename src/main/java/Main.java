@@ -10,6 +10,7 @@ import main.java.models.Booking;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
@@ -36,11 +37,11 @@ public class Main {
 //        hall.markAsEmptySpace(3, 3);
 //        cinemaService.addHall(hall);
 
-        // Removing seat
-        Session session = cinemaService.getSession("1");
-        session.removeSeat(new Seat(3, 3));
-        cinemaService.updateSession(session);
-        System.out.println("Session updated: " + session);
+//        // Removing seat
+//        Session session = cinemaService.getSession("1");
+//        session.removeSeat(new Seat(3, 3));
+//        cinemaService.updateSession(session);
+//        System.out.println("Session updated: " + session);
 
 //        // Add seat
 //        Session session = cinemaService.getSession("1");
@@ -48,6 +49,11 @@ public class Main {
 //        cinemaService.updateSession(session);
 //        System.out.println("Session updated: " + session);
 
+//        // Add booking
+//        Booking booking = new Booking("2", "1", new Seat(3,3), "1234567890");
+//        cinemaService.addBooking(booking);
+
+        cinemaService.addBooking(new Booking("1","2",new Seat(1,1),"0549557282"));
 
         System.out.println("Все сеансы: " + cinemaService.getAllSessions());
         System.out.println("Все бронирования: " + cinemaService.getAllBookings());

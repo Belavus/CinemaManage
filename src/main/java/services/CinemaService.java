@@ -1,6 +1,7 @@
 package main.java.services;
 
 import main.java.models.Hall;
+import main.java.models.Seat;
 import main.java.models.Session;
 import main.java.models.Booking;
 import main.java.dao.HallDao;
@@ -9,6 +10,7 @@ import main.java.dao.BookingDao;
 import main.java.util.ConfigUtil;
 import main.java.seatAllocationAlgorithm.src.IAlgoSeatDistribution;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.concurrent.locks.ReentrantReadWriteLock; //synchronization for critical sections
@@ -84,7 +86,41 @@ public class CinemaService {
     public void deleteSession(String sessionId) {
         lock.writeLock().lock();
         try {
+            // Remove all bookings associated with the session
+            List<Booking> bookings = bookingDao.getAll().values().stream()
+                    .filter(booking -> booking.getSessionId().equals(sessionId))
+                    .toList();
+            for (Booking booking : bookings) {
+                bookingDao.delete(booking.getBookingId());
+            }
+            // Remove the session itself
             sessionDao.delete(sessionId);
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    public void addSeatToSession(String sessionId, Seat seat) {
+        lock.writeLock().lock();
+        try {
+            Session session = sessionDao.get(sessionId);
+            if (session != null) {
+                session.addSeat(seat);
+                sessionDao.update(session);
+            }
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    public void removeSeatFromSession(String sessionId, Seat seat) {
+        lock.writeLock().lock();
+        try {
+            Session session = sessionDao.get(sessionId);
+            if (session != null) {
+                session.removeSeat(seat);
+                sessionDao.update(session);
+            }
         } finally {
             lock.writeLock().unlock();
         }
@@ -95,6 +131,7 @@ public class CinemaService {
         lock.writeLock().lock();
         try {
             bookingDao.save(booking);
+            addSeatToSession(booking.getSessionId(), booking.getSeat());
         } finally {
             lock.writeLock().unlock();
         }
@@ -112,7 +149,7 @@ public class CinemaService {
     public List<Booking> getAllBookings() {
         lock.readLock().lock();
         try {
-            return bookingDao.getAll().values().stream().collect(Collectors.toList());
+            return new ArrayList<>(bookingDao.getAll().values());
         } finally {
             lock.readLock().unlock();
         }
@@ -130,7 +167,11 @@ public class CinemaService {
     public void deleteBooking(String bookingId) {
         lock.writeLock().lock();
         try {
-            bookingDao.delete(bookingId);
+            Booking booking = bookingDao.get(bookingId);
+            if (booking != null) {
+                removeSeatFromSession(booking.getSessionId(), booking.getSeat());
+                bookingDao.delete(bookingId);
+            }
         } finally {
             lock.writeLock().unlock();
         }
@@ -158,7 +199,7 @@ public class CinemaService {
     public List<Hall> getAllHalls() {
         lock.readLock().lock();
         try {
-            return hallDao.getAll().values().stream().collect(Collectors.toList());
+            return new ArrayList<>(hallDao.getAll().values());
         } finally {
             lock.readLock().unlock();
         }

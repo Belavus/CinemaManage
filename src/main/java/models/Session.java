@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Session implements Serializable {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private String sessionId;
@@ -20,6 +21,10 @@ public class Session implements Serializable {
         this.time = time;
         this.seats = seats != null ? new ArrayList<>(seats) : new ArrayList<>();
         this.hallNumber = hallNumber;
+    }
+
+    public Session(String sessionId, String movieName, String time, int hallNumber) {
+        this(sessionId, movieName, time, new ArrayList<>(), hallNumber);
     }
 
     // Getters and setters...

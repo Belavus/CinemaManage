@@ -50,6 +50,9 @@ public class CinemaService {
     public void addSession(Session session) {
         lock.writeLock().lock();
         try {
+            if (hallDao.get(String.valueOf(session.getHallNumber())) == null) {
+                throw new IllegalArgumentException("Hall number " + session.getHallNumber() + " does not exist.");
+            }
             sessionDao.save(session);
         } finally {
             lock.writeLock().unlock();
@@ -77,6 +80,9 @@ public class CinemaService {
     public void updateSession(Session session) {
         lock.writeLock().lock();
         try {
+            if (sessionDao.get(session.getSessionId()) == null) {
+                throw new IllegalArgumentException("Session with ID " + session.getSessionId() + " does not exist.");
+            }
             sessionDao.update(session);
         } finally {
             lock.writeLock().unlock();
@@ -89,7 +95,7 @@ public class CinemaService {
             // Remove all bookings associated with the session
             List<Booking> bookings = bookingDao.getAll().values().stream()
                     .filter(booking -> booking.getSessionId().equals(sessionId))
-                    .toList();
+                    .collect(Collectors.toList());
             for (Booking booking : bookings) {
                 bookingDao.delete(booking.getBookingId());
             }
@@ -107,6 +113,8 @@ public class CinemaService {
             if (session != null) {
                 session.addSeat(seat);
                 sessionDao.update(session);
+            } else {
+                throw new IllegalArgumentException("Session with ID " + sessionId + " does not exist.");
             }
         } finally {
             lock.writeLock().unlock();
@@ -120,6 +128,8 @@ public class CinemaService {
             if (session != null) {
                 session.removeSeat(seat);
                 sessionDao.update(session);
+            } else {
+                throw new IllegalArgumentException("Session with ID " + sessionId + " does not exist.");
             }
         } finally {
             lock.writeLock().unlock();
@@ -130,6 +140,9 @@ public class CinemaService {
     public void addBooking(Booking booking) {
         lock.writeLock().lock();
         try {
+            if (sessionDao.get(booking.getSessionId()) == null) {
+                throw new IllegalArgumentException("Session with ID " + booking.getSessionId() + " does not exist.");
+            }
             bookingDao.save(booking);
             addSeatToSession(booking.getSessionId(), booking.getSeat());
         } finally {
@@ -149,7 +162,7 @@ public class CinemaService {
     public List<Booking> getAllBookings() {
         lock.readLock().lock();
         try {
-            return new ArrayList<>(bookingDao.getAll().values());
+            return bookingDao.getAll().values().stream().collect(Collectors.toList());
         } finally {
             lock.readLock().unlock();
         }
@@ -158,6 +171,9 @@ public class CinemaService {
     public void updateBooking(Booking booking) {
         lock.writeLock().lock();
         try {
+            if (bookingDao.get(booking.getBookingId()) == null) {
+                throw new IllegalArgumentException("Booking with ID " + booking.getBookingId() + " does not exist.");
+            }
             bookingDao.update(booking);
         } finally {
             lock.writeLock().unlock();
@@ -171,6 +187,8 @@ public class CinemaService {
             if (booking != null) {
                 removeSeatFromSession(booking.getSessionId(), booking.getSeat());
                 bookingDao.delete(bookingId);
+            } else {
+                throw new IllegalArgumentException("Booking with ID " + bookingId + " does not exist.");
             }
         } finally {
             lock.writeLock().unlock();
@@ -199,7 +217,7 @@ public class CinemaService {
     public List<Hall> getAllHalls() {
         lock.readLock().lock();
         try {
-            return new ArrayList<>(hallDao.getAll().values());
+            return hallDao.getAll().values().stream().collect(Collectors.toList());
         } finally {
             lock.readLock().unlock();
         }
@@ -208,6 +226,9 @@ public class CinemaService {
     public void updateHall(Hall hall) {
         lock.writeLock().lock();
         try {
+            if (hallDao.get(String.valueOf(hall.getHallNumber())) == null) {
+                throw new IllegalArgumentException("Hall with number " + hall.getHallNumber() + " does not exist.");
+            }
             hallDao.update(hall);
         } finally {
             lock.writeLock().unlock();

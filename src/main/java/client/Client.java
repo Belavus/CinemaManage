@@ -1,16 +1,19 @@
 package main.java.client;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import main.java.server.Request;
 import main.java.server.Response;
 
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.lang.reflect.Type;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
+import main.java.models.Hall;
 
 public class Client {
     private final String host;
@@ -42,14 +45,14 @@ public class Client {
     public static void main(String[] args) {
         Client client = new Client("localhost", 34567);
 
-        // Create a request to add a hall
+        // ===========Create a request to add a hall===========
         Map<String, String> headers = new HashMap<>();
         headers.put("action", "hall/add");
 
+
         Map<String, Object> body = new HashMap<>();
-        body.put("hallNumber", 2);
-        body.put("rows", 7);
-        body.put("columns", 4);
+        Hall hall = new Hall(1,5,6);
+        body.put("hall", hall);
 
         Request request = new Request();
         request.setHeaders(headers);
@@ -58,12 +61,17 @@ public class Client {
         Response response = client.sendRequest(request);
         System.out.println("Response: " + response.getStatus() + " - " + response.getMessage());
 
-        // Additional requests to get all halls and display the result
+        // =========== Additional requests to get all halls and display the result ===========
+        Gson gson = new Gson();
+        Type hallMapType = new TypeToken<Map<String, Hall>>() {}.getType();
+
         headers.put("action", "hall/getAll");
         request.setHeaders(headers);
         request.setBody(new HashMap<>()); // Empty body
 
         response = client.sendRequest(request);
-        System.out.println("All Halls: " + response.getMessage());
+        Map<String,Hall> hallMapFromJson = gson.fromJson(response.getMessage(), hallMapType);
+        System.out.println(hallMapFromJson.get("1"));
+        System.out.println("All Halls: " + hallMapFromJson);
     }
 }

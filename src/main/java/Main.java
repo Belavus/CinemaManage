@@ -14,49 +14,20 @@ import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
-        // output current working directory
+        // Output current working directory
         System.out.println("Current working directory: " + System.getProperty("user.dir"));
 
         // Use paths from config.properties file
-        IAlgoSeatDistribution algo = new BFSMaxDistanceSeatAlgorithm();
+        IAlgoSeatDistribution algo = new BFSMaxDistanceSeatAlgorithm(); // Используем конкретную реализацию алгоритма
         CinemaService cinemaService = new CinemaService(algo);
 
-//        // Uncomment to add initial data
-//        Seat seat1 = new Seat(1, 1);
-//        Seat seat2 = new Seat(1, 2);
+        // Add and retrieve a hall
+        Hall hall = new Hall(3, 4, 3);
+        hall.markAsVIP(1, 1);
+        hall.markAsAccessible(2, 2);
+        hall.markAsEmptySpace(3, 3);
+        cinemaService.addHall(hall);
 
-//        Session session = new Session("1", "Movie", "18:00", new ArrayList<>(Arrays.asList(seat1, seat2)), 1);
-//        cinemaService.addSession(session);
-
-//        Booking booking = new Booking("1", "1", seat1, "1234567890");
-//        cinemaService.addBooking(booking);
-//
-//        Hall hall = new Hall(1, 5, 5);
-//        hall.markAsVIP(1, 1);
-//        hall.markAsAccessible(2, 2);
-//        hall.markAsEmptySpace(3, 3);
-//        cinemaService.addHall(hall);
-
-//        // Removing seat
-//        Session session = cinemaService.getSession("1");
-//        session.removeSeat(new Seat(3, 3));
-//        cinemaService.updateSession(session);
-//        System.out.println("Session updated: " + session);
-
-//        // Add seat
-//        Session session = cinemaService.getSession("1");
-//        session.addSeat(new Seat(3, 3));
-//        cinemaService.updateSession(session);
-//        System.out.println("Session updated: " + session);
-
-//        // Add booking
-//        Booking booking = new Booking("2", "1", new Seat(3,3), "1234567890");
-//        cinemaService.addBooking(booking);
-
-        cinemaService.addBooking(new Booking("1","2",new Seat(1,1),"0549557282"));
-
-        System.out.println("Все сеансы: " + cinemaService.getAllSessions());
-        System.out.println("Все бронирования: " + cinemaService.getAllBookings());
         System.out.println("Все залы: " + cinemaService.getAllHalls());
     }
 }

@@ -62,7 +62,7 @@ public class CinemaController {
 
     public Response addHall(Map<String, Object> body) {
         try {
-            String json = gson.toJson(body);
+            String json = gson.toJson(body.get("hall"));
             Hall hall = gson.fromJson(json, Hall.class);
             cinemaService.addHall(hall);
             return new Response("success", "Hall added successfully");

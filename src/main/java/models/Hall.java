@@ -21,6 +21,9 @@ public class Hall implements Serializable {
     public Hall(int hallNumber, int rows, int columns) {
         this.hallNumber = hallNumber;
         this.layout = new int[rows][columns];
+        for (int[] row : layout) {
+            Arrays.fill(row, EMPTY);
+        }
     }
 
     public int getHallNumber() {

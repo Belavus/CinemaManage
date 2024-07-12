@@ -51,7 +51,7 @@ public class Client {
 
 
         Map<String, Object> body = new HashMap<>();
-        Hall hall = new Hall(1,5,6);
+        Hall hall = new Hall(4,10,6);
         body.put("hall", hall);
 
         Request request = new Request();

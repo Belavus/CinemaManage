@@ -45,10 +45,14 @@ public class HandleRequest implements Runnable {
                 return controller.addSession(request.getBody());
             case "session/delete":
                 return controller.deleteSession(request.getBody());
+            case "session/getAll":
+                return controller.getAllSessions();
             case "booking/add":
                 return controller.addBooking(request.getBody());
             case "booking/delete":
                 return controller.deleteBooking(request.getBody());
+            case "booking/getAll":
+                return controller.getAllBookings();
             case "hall/add":
                 return controller.addHall(request.getBody());
             case "hall/delete":

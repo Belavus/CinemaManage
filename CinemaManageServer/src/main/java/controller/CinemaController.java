@@ -20,7 +20,7 @@ public class CinemaController {
 
     public Response addSession(Map<String, Object> body) {
         try {
-            String json = gson.toJson(body);
+            String json = gson.toJson(body.get("session"));
             Session session = gson.fromJson(json, Session.class);
             cinemaService.addSession(session);
             return new Response("success", "Session added successfully");
@@ -41,7 +41,7 @@ public class CinemaController {
 
     public Response addBooking(Map<String, Object> body) {
         try {
-            String json = gson.toJson(body);
+            String json = gson.toJson(body.get("booking"));
             Booking booking = gson.fromJson(json, Booking.class);
             cinemaService.addBooking(booking);
             return new Response("success", "Booking added successfully");
@@ -85,6 +85,24 @@ public class CinemaController {
         try {
             Map<String, Hall> halls = cinemaService.getAllHalls();
             return new Response("success", gson.toJson(halls));
+        } catch (Exception e) {
+            return new Response("error", e.getMessage());
+        }
+    }
+
+    public Response getAllSessions() {
+        try {
+            Map<String, Session> sessions = cinemaService.getAllSessions();
+            return new Response("success", gson.toJson(sessions));
+        } catch (Exception e) {
+            return new Response("error", e.getMessage());
+        }
+    }
+
+    public Response getAllBookings() {
+        try {
+            Map<String, Booking> bookings = cinemaService.getAllBookings();
+            return new Response("success", gson.toJson(bookings));
         } catch (Exception e) {
             return new Response("error", e.getMessage());
         }

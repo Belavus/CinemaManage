@@ -9,25 +9,40 @@ public class Client {
     private final String host;
     private final int port;
     private final Gson gson = new Gson();
+    private Socket socket;
+    private PrintWriter out;
+    private BufferedReader in;
 
     public Client(String host, int port) {
         this.host = host;
         this.port = port;
     }
 
-    public Response sendRequest(Request request) throws IOException {
-        try (Socket socket = new Socket(host, port);
-             PrintWriter out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()), true);
-             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
+    public void connect() throws IOException {
+        System.out.println("Client connected");
+        socket = new Socket(host, port);
+        out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()), true);
+        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+    }
 
-            String requestJson = gson.toJson(request);
-            out.println(requestJson);
-            String responseJson = in.readLine();
-            return gson.fromJson(responseJson, Response.class);
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new IOException("Error during communication with server.", e);
+    public Response sendRequest(Request request) throws IOException {
+        if (out == null || in == null) {
+            throw new IOException("Client is not connected.");
         }
+        String requestJson = gson.toJson(request);
+        out.println(requestJson);
+        String responseJson = in.readLine();
+        if (responseJson == null) {
+            throw new IOException("Server closed connection unexpectedly.");
+        }
+        return gson.fromJson(responseJson, Response.class);
+    }
+
+    public void disconnect() throws IOException {
+        System.out.println("Client disconnected.");
+        if (in != null) in.close();
+        if (out != null) out.close();
+        if (socket != null) socket.close();
     }
 
     public Gson getGson() {

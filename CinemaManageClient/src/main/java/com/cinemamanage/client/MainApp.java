@@ -5,19 +5,28 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
-import java.io.IOException;
-
 public class MainApp extends Application {
+    private static Stage primaryStage;
+
     @Override
-    public void start(Stage stage) throws IOException {
-        FXMLLoader fxmlLoader = new FXMLLoader(MainApp.class.getResource("hello-view.fxml"));
-        Scene scene = new Scene(fxmlLoader.load(), 600, 400);
-        stage.setTitle("Cinema Manage Client");
-        stage.setScene(scene);
-        stage.show();
+    public void start(Stage primaryStage) throws Exception {
+        MainApp.primaryStage = primaryStage;
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/cinemamanage/client/main-view.fxml"));
+        Scene scene = new Scene(loader.load());
+        primaryStage.setScene(scene);
+        primaryStage.setTitle("Cinema Management");
+        primaryStage.show();
+        primaryStage.setOnCloseRequest(event -> {
+            MainViewController controller = loader.getController();
+            controller.onClose();
+        });
+    }
+
+    public static Stage getPrimaryStage() {
+        return primaryStage;
     }
 
     public static void main(String[] args) {
-        launch();
+        launch(args);
     }
 }

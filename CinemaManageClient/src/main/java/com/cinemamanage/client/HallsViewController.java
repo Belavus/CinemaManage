@@ -1,35 +1,31 @@
 package com.cinemamanage.client;
 
 import com.cinemamanage.models.Hall;
+import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
-import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
 
 import java.io.IOException;
-import java.net.URL;
-import java.util.ResourceBundle;
+import java.util.Map;
 
-public class HallsViewController implements Initializable {
-    @FXML
-    private Label welcomeText;
+public class HallsViewController {
 
     @FXML
-    private Button getAllHallsButton;
+    private ComboBox<String> hallsComboBox;
 
     @FXML
-    private ListView<String> hallsListView;
+    private Label hallDetailsLabel;
 
     private CinemaService cinemaService;
 
-    @Override
-    public void initialize(URL url, ResourceBundle resourceBundle) {
+    @FXML
+    public void initialize() {
         try {
-            this.cinemaService = new CinemaService("localhost", 34567);
-            welcomeText.setText("Connected to server.");
+            cinemaService = new CinemaService("localhost", 34567);
+            fetchAllHalls();
         } catch (IOException e) {
-            welcomeText.setText("Error: " + e.getMessage());
+            hallDetailsLabel.setText("Error: Unable to connect to the server.");
             e.printStackTrace();
         }
     }
@@ -37,22 +33,30 @@ public class HallsViewController implements Initializable {
     @FXML
     protected void onGetAllHallsButtonClick() {
         try {
-            cinemaService.fetchAllHalls();
-            hallsListView.getItems().clear();
-            for (Hall hall : cinemaService.getAllHalls().values()) {
-                hallsListView.getItems().add(hall.toString());
-            }
+            fetchAllHalls();
         } catch (IOException e) {
-            welcomeText.setText("Error: " + e.getMessage());
+            hallDetailsLabel.setText("Error: " + e.getMessage());
             e.printStackTrace();
+        }
+    }
+
+    private void fetchAllHalls() throws IOException {
+        cinemaService.fetchAllHalls();
+        hallsComboBox.setItems(FXCollections.observableArrayList(cinemaService.getAllHalls().keySet()));
+    }
+
+    @FXML
+    protected void onHallSelected() {
+        String selectedHallNumber = hallsComboBox.getSelectionModel().getSelectedItem();
+        if (selectedHallNumber != null) {
+            Hall selectedHall = cinemaService.getAllHalls().get(selectedHallNumber);
+            hallDetailsLabel.setText(selectedHall.toString());
         }
     }
 
     public void onClose() {
         try {
-            if (cinemaService != null) {
-                cinemaService.onClose();
-            }
+            cinemaService.onClose();
         } catch (IOException e) {
             e.printStackTrace();
         }

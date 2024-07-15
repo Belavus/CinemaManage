@@ -1,14 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.ListView?>
-<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.VBox?>
 
-<AnchorPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.cinemamanage.client.HallsViewController">
-    <children>
-        <Label fx:id="welcomeText" layoutX="14.0" layoutY="14.0" text="Welcome to Halls Management"/>
-        <Button fx:id="getAllHallsButton" layoutX="14.0" layoutY="45.0" mnemonicParsing="false" text="Get All Halls" onAction="#onGetAllHallsButtonClick"/>
-        <ListView fx:id="hallsListView" layoutX="14.0" layoutY="85.0" prefHeight="200.0" prefWidth="200.0"/>
-    </children>
-</AnchorPane>
+<VBox spacing="10" alignment="TOP_CENTER" xmlns:fx="http://javafx.com/fxml" fx:controller="com.cinemamanage.client.HallsViewController">
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20"/>
+    </padding>
+
+    <Label text="Halls Management" style="-fx-font-size: 20px;"/>
+
+    <ComboBox fx:id="hallsComboBox" promptText="Select Hall" onAction="#onHallSelected"/>
+
+    <Label fx:id="hallDetailsLabel" text="Hall details will be displayed here." wrapText="true"/>
+
+    <Button text="Get All Halls" onAction="#onGetAllHallsButtonClick"/>
+</VBox>

@@ -26,6 +26,14 @@ public class Hall implements Serializable {
         }
     }
 
+    public Hall(int hallNumber, int[][] layout) {
+        this.hallNumber = hallNumber;
+        this.layout = new int[layout.length][];
+        for (int i = 0; i < layout.length; i++) {
+            this.layout[i] = Arrays.copyOf(layout[i], layout[i].length);
+        }
+    }
+
     public int getHallNumber() {
         return hallNumber;
     }

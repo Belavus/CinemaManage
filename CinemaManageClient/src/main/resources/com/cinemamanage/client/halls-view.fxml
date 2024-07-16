@@ -10,13 +10,14 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.cinemamanage.client.HallsViewController">
+<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.cinemamanage.client.HallsViewController"
+            prefWidth="1000" prefHeight="800">
     <top>
         <VBox spacing="10">
             <HBox spacing="10">
+                <Label text="Choose Hall: "/>
                 <ComboBox fx:id="hallsComboBox" onAction="#onHallSelected"/>
-                <Button text="Get All Halls" onAction="#onGetAllHallsButtonClick"/>
-                <Button text="New Hall" onAction="#onNewHallButtonClick"/>
+                <Button text="Delete Hall" onAction="#onDeleteHallButtonClick"/>
             </HBox>
             <HBox spacing="10">
                 <Label text="Rows:"/>
@@ -25,7 +26,7 @@
                 <TextField fx:id="columnsField"/>
                 <Label text="Hall Number:"/>
                 <TextField fx:id="hallNumberField"/>
-                <Button text="Create" onAction="#onCreateNewHallButtonClick"/>
+                <Button text="Create New Hall" onAction="#onCreateNewHallButtonClick"/>
                 <Button text="Save" onAction="#onSaveNewHallButtonClick"/>
             </HBox>
         </VBox>
@@ -37,4 +38,37 @@
             </padding>
         </GridPane>
     </center>
+    <bottom>
+        <Button text="Back" onAction="#onBackButtonClick"/>
+    </bottom>
 </BorderPane>
+
+
+<!--<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.cinemamanage.client.HallsViewController">-->
+<!--    <top>-->
+<!--        <VBox spacing="10">-->
+<!--            <HBox spacing="10">-->
+<!--                <Label text="Choose Hall: "/>-->
+<!--                <ComboBox fx:id="hallsComboBox" onAction="#onHallSelected"/>-->
+<!--                <Button text="Delete Hall" onAction="#onDeleteHallButtonClick"/>-->
+<!--            </HBox>-->
+<!--            <HBox spacing="10">-->
+<!--                <Label text="Rows:"/>-->
+<!--                <TextField fx:id="rowsField"/>-->
+<!--                <Label text="Columns:"/>-->
+<!--                <TextField fx:id="columnsField"/>-->
+<!--                <Label text="Hall Number:"/>-->
+<!--                <TextField fx:id="hallNumberField"/>-->
+<!--                <Button text="Create New Hall" onAction="#onCreateNewHallButtonClick"/>-->
+<!--                <Button text="Save" onAction="#onSaveNewHallButtonClick"/>-->
+<!--            </HBox>-->
+<!--        </VBox>-->
+<!--    </top>-->
+<!--    <center>-->
+<!--        <GridPane fx:id="hallLayoutGrid" hgap="5" vgap="5">-->
+<!--            <padding>-->
+<!--                <Insets top="10" right="10" bottom="10" left="10"/>-->
+<!--            </padding>-->
+<!--        </GridPane>-->
+<!--    </center>-->
+<!--</BorderPane>-->

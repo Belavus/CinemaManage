@@ -13,6 +13,8 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.lang.reflect.Type;
 import java.net.Socket;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import main.java.models.Hall;
@@ -79,7 +81,7 @@ public class Client {
         // =========== Additional requests to add and get all SESSIONS and display the result ===========
         Seat seat1 = new Seat(1, 1);
         Seat seat2 = new Seat(1, 2);
-        Session session = new Session("1", "Terminator", "2024-07-18 20:00", Arrays.asList(seat1, seat2), 1);
+        Session session = new Session("1", "Terminator", "2024-07-18 20:00",60, Arrays.asList(seat1, seat2), 1);
 
         headers.put("action", "session/add");
         body.clear();

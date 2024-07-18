@@ -16,6 +16,7 @@
     <top>
         <VBox spacing="10">
             <HBox spacing="10">
+                <Label text="Filter: "/>
                 <Label text="Movie Name:"/>
                 <TextField fx:id="movieNameField"/>
                 <Label text="Time:"/>
@@ -29,6 +30,8 @@
                 <TextField fx:id="newMovieNameField"/>
                 <Label text="Time:"/>
                 <TextField fx:id="newTimeField"/>
+                <Label text="Duration:"/>
+                <TextField fx:id="newDurationField"/>
                 <Label text="Hall Number:"/>
                 <ComboBox fx:id="newHallComboBox"/>
                 <Button text="Add New Session" onAction="#onAddNewSessionButtonClick"/>

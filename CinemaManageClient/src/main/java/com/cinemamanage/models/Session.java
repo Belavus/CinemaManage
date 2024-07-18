@@ -11,20 +11,22 @@ public class Session implements Serializable {
 
     private String sessionId;
     private String movieName;
-    private String time;
+    private String time; // Time as a String
+    private int duration; // Duration in minutes
     private List<Seat> seats;
     private int hallNumber;
 
-    public Session(String sessionId, String movieName, String time, List<Seat> seats, int hallNumber) {
+    public Session(String sessionId, String movieName, String time, int duration, List<Seat> seats, int hallNumber) {
         this.sessionId = sessionId;
         this.movieName = movieName;
         this.time = time;
+        this.duration = duration;
         this.seats = seats != null ? new ArrayList<>(seats) : new ArrayList<>();
         this.hallNumber = hallNumber;
     }
 
-    public Session(String sessionId, String movieName, String time, int hallNumber) {
-        this(sessionId, movieName, time, new ArrayList<>(), hallNumber);
+    public Session(String sessionId, String movieName, String time, int duration, int hallNumber) {
+        this(sessionId, movieName, time, duration, new ArrayList<>(), hallNumber);
     }
 
     // Getters and setters...
@@ -51,6 +53,14 @@ public class Session implements Serializable {
 
     public void setTime(String time) {
         this.time = time;
+    }
+
+    public int getDuration() {
+        return duration;
+    }
+
+    public void setDuration(int duration) {
+        this.duration = duration;
     }
 
     public List<Seat> getSeats() {
@@ -87,6 +97,7 @@ public class Session implements Serializable {
                 "sessionId='" + sessionId + '\'' +
                 ", movieName='" + movieName + '\'' +
                 ", time='" + time + '\'' +
+                ", duration=" + duration +
                 ", seats=" + seats +
                 ", hallNumber=" + hallNumber +
                 '}';

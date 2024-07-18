@@ -44,6 +44,9 @@ public class SessionsViewController {
     private TextField newTimeField;
 
     @FXML
+    private TextField newDurationField;
+
+    @FXML
     private ComboBox<String> newHallComboBox;
 
     @FXML
@@ -181,51 +184,69 @@ public class SessionsViewController {
     protected void onAddNewSessionButtonClick() {
         String movieName = newMovieNameField.getText();
         String time = newTimeField.getText();
+        String durationStr = newDurationField.getText();
         String hallNumberStr = newHallComboBox.getSelectionModel().getSelectedItem();
-        if (movieName.isEmpty() || time.isEmpty() || hallNumberStr == null) {
+        if (movieName.isEmpty() || time.isEmpty() || durationStr.isEmpty() || hallNumberStr == null) {
             showAlert("Error", "All fields must be filled.");
             return;
         }
-        try {
-            LocalDateTime.parse(time, dateTimeFormatter);
-        } catch (Exception e) {
-            showAlert("Error", "Time format must be yyyy-MM-dd HH:mm.");
+        LocalDateTime startTime = LocalDateTime.parse(time, dateTimeFormatter);
+        int duration = Integer.parseInt(durationStr);
+        int hallNumber = Integer.parseInt(hallNumberStr);
+
+        if (isSessionOverlapping(hallNumber, startTime, duration)) {
+            showAlert("Error", "The session time overlaps with an existing session in the same hall.");
             return;
         }
 
-        int hallNumber = Integer.parseInt(hallNumberStr);
-        String sessionId = generateSessionId();
-        Session newSession = new Session(sessionId, movieName, time, hallNumber);
-
+        String newSessionId = generateNewSessionId();
+        Session newSession = new Session(newSessionId, movieName, time, duration, hallNumber);
         try {
             cinemaService.addSession(newSession);
-            fetchAllSessions();
+            allSessions.add(newSession);
+            sessionsTableView.setItems(allSessions);
         } catch (IOException e) {
-            showAlert("Error", "Failed to add session: " + e.getMessage());
+            showAlert("Error", "Failed to add the new session.");
+            e.printStackTrace();
         }
     }
 
-    private String generateSessionId() {
-        int maxId = cinemaService.getAllSessions().keySet().stream()
-                .map(id -> id.replaceAll("\\D", ""))
-                .mapToInt(Integer::parseInt)
-                .max()
-                .orElse(0);
-        return String.format("S%03d", maxId + 1);
+    private boolean isSessionOverlapping(int hallNumber, LocalDateTime startTime, int duration) {
+        LocalDateTime endTime = startTime.plusMinutes(duration);
+        return allSessions.stream().anyMatch(session -> {
+            if (session.getHallNumber() == hallNumber) {
+                LocalDateTime sessionStart = LocalDateTime.parse(session.getTime(), dateTimeFormatter);
+                LocalDateTime sessionEnd = sessionStart.plusMinutes(session.getDuration());
+                return startTime.isBefore(sessionEnd) && endTime.isAfter(sessionStart);
+            }
+            return false;
+        });
     }
 
-    private void showAlert(String title, String content) {
+    private String generateNewSessionId() {
+        int maxId = allSessions.stream().mapToInt(session -> Integer.parseInt(session.getSessionId())).max().orElse(0);
+        return String.valueOf(maxId + 1);
+    }
+
+    private void showAlert(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(content);
+        alert.setContentText(message);
         alert.showAndWait();
     }
 
     @FXML
     protected void onBackButtonClick() throws IOException {
         Stage stage = (Stage) sessionsTableView.getScene().getWindow();
-        Parent root = FXMLLoader.load(getClass().getResource("main-view.fxml"));
+        Parent root = FXMLLoader.load(getClass().getResource("/com/cinemamanage/client/main-view.fxml"));
         stage.setScene(new Scene(root));
+    }
+
+    public void onClose() {
+        try {
+            cinemaService.onClose();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

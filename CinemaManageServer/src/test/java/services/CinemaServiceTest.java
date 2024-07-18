@@ -15,6 +15,9 @@ import main.java.dao.BookingDao;
 import main.java.dao.HallDao;
 import main.java.seatAllocationAlgorithm.src.IAlgoSeatDistribution;
 import main.java.seatAllocationAlgorithm.src.BFSMaxDistanceSeatAlgorithm;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Map;
 import java.io.File;
@@ -68,7 +71,7 @@ public class CinemaServiceTest {
     public void testAddAndGetSession() {
         Seat seat1 = new Seat(1, 1);
         Seat seat2 = new Seat(1, 2);
-        Session session = new Session("1", "Movie", "18:00", Arrays.asList(seat1, seat2), 1);
+        Session session = new Session("1", "Movie", "2024-07-18 20:00",2, Arrays.asList(seat1, seat2), 1);
         cinemaService.addSession(session);
 
         Session retrievedSession = cinemaService.getSession("1");
@@ -124,7 +127,7 @@ public class CinemaServiceTest {
     public void testGetAllSessions() {
         Seat seat1 = new Seat(1, 1);
         Seat seat2 = new Seat(1, 2);
-        Session session = new Session("1", "Movie", "18:00", Arrays.asList(seat1, seat2), 1);
+        Session session = new Session("1", "Movie", "2024-07-18 20:00",60, Arrays.asList(seat1, seat2), 1);
         cinemaService.addSession(session);
 
         Map<String, Session> sessions = cinemaService.getAllSessions();

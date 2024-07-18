@@ -2,6 +2,7 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
@@ -11,7 +12,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.cinemamanage.client.SessionsViewController" prefWidth="800" prefHeight="600">
+<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.cinemamanage.client.SessionsViewController">
     <top>
         <VBox spacing="10">
             <HBox spacing="10">
@@ -24,12 +25,18 @@
                 <Button text="Filter" onAction="#onFilterButtonClick"/>
             </HBox>
             <HBox spacing="10">
-                <Button text="Back" onAction="#onBackButtonClick"/>
+                <Label text="Movie Name:"/>
+                <TextField fx:id="newMovieNameField"/>
+                <Label text="Time:"/>
+                <TextField fx:id="newTimeField"/>
+                <Label text="Hall Number:"/>
+                <ComboBox fx:id="newHallComboBox"/>
+                <Button text="Add New Session" onAction="#onAddNewSessionButtonClick"/>
             </HBox>
         </VBox>
     </top>
     <center>
-        <TableView fx:id="sessionsTableView" onMouseClicked="#onSessionSelected">
+        <TableView fx:id="sessionsTableView">
             <columns>
                 <TableColumn fx:id="sessionIdColumn" text="Session ID"/>
                 <TableColumn fx:id="movieNameColumn" text="Movie Name"/>
@@ -44,46 +51,6 @@
                 <Insets top="10" right="10" bottom="10" left="10"/>
             </padding>
         </GridPane>
+        <Button text="Back" onAction="#onBackButtonClick" BorderPane.alignment="BOTTOM_RIGHT"/>
     </bottom>
 </BorderPane>
-
-<!--<?xml version="1.0" encoding="UTF-8"?>-->
-
-<!--<?import javafx.geometry.Insets?>-->
-<!--<?import javafx.scene.control.Button?>-->
-<!--<?import javafx.scene.control.Label?>-->
-<!--<?import javafx.scene.control.ListView?>-->
-<!--<?import javafx.scene.control.TextField?>-->
-<!--<?import javafx.scene.layout.BorderPane?>-->
-<!--<?import javafx.scene.layout.GridPane?>-->
-<!--<?import javafx.scene.layout.HBox?>-->
-<!--<?import javafx.scene.layout.VBox?>-->
-
-<!--<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.cinemamanage.client.SessionsViewController" prefWidth="800" prefHeight="600">-->
-<!--    <top>-->
-<!--        <VBox spacing="10">-->
-<!--            <HBox spacing="10">-->
-<!--                <Label text="Movie Name:"/>-->
-<!--                <TextField fx:id="movieNameField"/>-->
-<!--                <Label text="Time:"/>-->
-<!--                <TextField fx:id="timeField"/>-->
-<!--                <Label text="Hall Number:"/>-->
-<!--                <TextField fx:id="hallNumberField"/>-->
-<!--                <Button text="Filter" onAction="#onFilterButtonClick"/>-->
-<!--            </HBox>-->
-<!--            <HBox spacing="10">-->
-<!--                <Button text="Back" onAction="#onBackButtonClick"/>-->
-<!--            </HBox>-->
-<!--        </VBox>-->
-<!--    </top>-->
-<!--    <center>-->
-<!--        <ListView fx:id="sessionsListView" onMouseClicked="#onSessionSelected"/>-->
-<!--    </center>-->
-<!--    <bottom>-->
-<!--        <GridPane fx:id="hallLayoutGrid" hgap="5" vgap="5">-->
-<!--            <padding>-->
-<!--                <Insets top="10" right="10" bottom="10" left="10"/>-->
-<!--            </padding>-->
-<!--        </GridPane>-->
-<!--    </bottom>-->
-<!--</BorderPane>-->

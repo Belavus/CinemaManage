@@ -3,8 +3,8 @@ package com.cinemamanage.client;
 import com.cinemamanage.models.Hall;
 import com.cinemamanage.models.Seat;
 import com.cinemamanage.models.Session;
-import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -12,8 +12,8 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.input.MouseButton;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
@@ -65,6 +65,9 @@ public class SessionsViewController {
     private TableColumn<Session, String> timeColumn;
 
     @FXML
+    private TableColumn<Session, Integer> durationColumn;
+
+    @FXML
     private TableColumn<Session, Integer> hallNumberColumn;
 
     @FXML
@@ -73,6 +76,8 @@ public class SessionsViewController {
     private CinemaService cinemaService;
     private DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
     private ObservableList<Session> allSessions;
+
+    private Session selectedSession;
 
     @FXML
     public void initialize() {
@@ -90,16 +95,18 @@ public class SessionsViewController {
         sessionIdColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getSessionId()));
         movieNameColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getMovieName()));
         timeColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getTime()));
+        durationColumn.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getDuration()).asObject());
         hallNumberColumn.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getHallNumber()).asObject());
 
         sessionsTableView.setRowFactory(tv -> {
             TableRow<Session> row = new TableRow<>();
             row.setOnMouseClicked(event -> {
-                if (!row.isEmpty()) {
+                if (!row.isEmpty() && event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 1) {
                     Session rowData = row.getItem();
                     displaySession(rowData);
                 }
             });
+            row.setOnContextMenuRequested(event -> showContextMenu(event, row));
             return row;
         });
     }
@@ -199,12 +206,21 @@ public class SessionsViewController {
             return;
         }
 
-        String newSessionId = generateNewSessionId();
-        Session newSession = new Session(newSessionId, movieName, time, duration, hallNumber);
+        String sessionId = (selectedSession == null) ? generateNewSessionId() : selectedSession.getSessionId();
+        Session newSession = new Session(sessionId, movieName, time, duration, hallNumber);
         try {
-            cinemaService.addSession(newSession);
-            allSessions.add(newSession);
+            if (selectedSession == null) {
+                cinemaService.addSession(newSession);
+                allSessions.add(newSession);
+            } else {
+                cinemaService.addSession(newSession);
+                int index = allSessions.indexOf(selectedSession);
+                allSessions.set(index, newSession);
+                selectedSession = null;
+                addNewSessionButton.setText("Add New Session");
+            }
             sessionsTableView.setItems(allSessions);
+            clearSessionFields();
         } catch (IOException e) {
             showAlert("Error", "Failed to add the new session.");
             e.printStackTrace();
@@ -235,11 +251,60 @@ public class SessionsViewController {
         alert.showAndWait();
     }
 
+    private void showContextMenu(ContextMenuEvent event, TableRow<Session> row) {
+        if (!row.isEmpty()) {
+            ContextMenu contextMenu = new ContextMenu();
+
+            MenuItem editItem = new MenuItem("Edit");
+            editItem.setOnAction(e -> onEditSession(row.getItem()));
+
+            MenuItem deleteItem = new MenuItem("Delete");
+            deleteItem.setOnAction(e -> onDeleteSession(row.getItem()));
+
+            contextMenu.getItems().addAll(editItem, deleteItem);
+            contextMenu.show(row, event.getScreenX(), event.getScreenY());
+        }
+    }
+
+    private void onEditSession(Session session) {
+        selectedSession = session;
+        newMovieNameField.setText(session.getMovieName());
+        newTimeField.setText(session.getTime());
+        newDurationField.setText(String.valueOf(session.getDuration()));
+        newHallComboBox.getSelectionModel().select(String.valueOf(session.getHallNumber()));
+        addNewSessionButton.setText("Save Changes");
+    }
+
+    private void onDeleteSession(Session session) {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Delete Session");
+        alert.setContentText("Are you sure you want to delete this session?");
+        alert.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                try {
+                    cinemaService.deleteSession(session.getSessionId());
+                    allSessions.remove(session);
+                    sessionsTableView.setItems(allSessions);
+                } catch (IOException e) {
+                    showAlert("Error", "Failed to delete the session.");
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
     @FXML
     protected void onBackButtonClick() throws IOException {
         Stage stage = (Stage) sessionsTableView.getScene().getWindow();
         Parent root = FXMLLoader.load(getClass().getResource("/com/cinemamanage/client/main-view.fxml"));
         stage.setScene(new Scene(root));
+    }
+
+    private void clearSessionFields() {
+        newMovieNameField.clear();
+        newTimeField.clear();
+        newDurationField.clear();
+        newHallComboBox.getSelectionModel().clearSelection();
     }
 
     public void onClose() {

@@ -34,7 +34,7 @@
                 <TextField fx:id="newDurationField"/>
                 <Label text="Hall Number:"/>
                 <ComboBox fx:id="newHallComboBox"/>
-                <Button text="Add New Session" onAction="#onAddNewSessionButtonClick"/>
+                <Button fx:id="addNewSessionButton" text="Add New Session" onAction="#onAddNewSessionButtonClick"/>
             </HBox>
         </VBox>
     </top>
@@ -44,6 +44,7 @@
                 <TableColumn fx:id="sessionIdColumn" text="Session ID"/>
                 <TableColumn fx:id="movieNameColumn" text="Movie Name"/>
                 <TableColumn fx:id="timeColumn" text="Time"/>
+                <TableColumn fx:id="durationColumn" text="Duration"/>
                 <TableColumn fx:id="hallNumberColumn" text="Hall Number"/>
             </columns>
         </TableView>

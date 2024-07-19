@@ -158,14 +158,14 @@ public class HallsViewController {
     }
 
     private void onCellClicked(MouseEvent event, int row, int column) {
-        if (event.getButton() == MouseButton.SECONDARY) {
+        if (event.getButton() == MouseButton.SECONDARY && this.currentEditingHall != null) {
             showContextMenu(event, row, column);
-        } else {
-            int currentValue = currentEditingHall.getLayout()[row][column];
-            int newValue = (currentValue + 1) % 5; // Assuming 5 different values
-            currentEditingHall.getLayout()[row][column] = newValue;
-            displayHallLayout(currentEditingHall); // Refresh the layout
-        }
+        } /*else {*/
+//            int currentValue = currentEditingHall.getLayout()[row][column];
+//            int newValue = (currentValue + 1) % 5; // Assuming 5 different values
+//            currentEditingHall.getLayout()[row][column] = newValue;
+//            displayHallLayout(currentEditingHall); // Refresh the layout
+//        }
     }
 
     private void showContextMenu(MouseEvent event, int row, int column) {

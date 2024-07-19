@@ -11,7 +11,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.cinemamanage.client.BookingsViewController">
+<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.cinemamanage.client.BookingsViewController" >
     <top>
         <VBox spacing="10">
             <HBox spacing="10">

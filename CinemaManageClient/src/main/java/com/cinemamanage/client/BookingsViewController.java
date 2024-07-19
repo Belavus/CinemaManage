@@ -165,6 +165,11 @@ public class BookingsViewController {
 
     @FXML
     protected void onAddBookingButtonClick() {
+        if (selectedSession == null) {
+            showAlert("Error", "Please select a session before adding a booking.");
+            return;
+        }
+
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/cinemamanage/client/add-booking-view.fxml"));
             Parent root = loader.load();
@@ -178,6 +183,7 @@ public class BookingsViewController {
             stage.showAndWait();
 
             fetchAllBookings(); // Refresh bookings after adding new one
+            initializeTableColumns();
         } catch (IOException e) {
             e.printStackTrace();
         }

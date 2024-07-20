@@ -51,9 +51,6 @@ public class AddBookingViewController {
         Hall hall = cinemaService.getAllHalls().get(String.valueOf(session.getHallNumber()));
         if (hall != null) {
             int[][] layout = hall.getLayout();
-            for(Seat seat : selectedSeats){
-                layout[seat.getRow()][seat.getColumn()] = Hall.OCCUPIED;
-            }
             for (int i = 0; i < layout.length; i++) {
                 for (int j = 0; j < layout[i].length; j++) {
                     Pane cell = createCell(layout[i][j], i, j);
@@ -73,6 +70,7 @@ public class AddBookingViewController {
         if (isSeatBooked(row, column)) {
             rectangle.setFill(Color.RED);
         }
+
         // Highlight already chosen seats
         if (isSeatChosen(row,column)){
             rectangle.setFill(Color.GREEN);

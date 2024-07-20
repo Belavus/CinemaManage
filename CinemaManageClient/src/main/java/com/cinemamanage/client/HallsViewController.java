@@ -188,7 +188,6 @@ public class HallsViewController {
 
         contextMenu.getItems().addAll(emptyItem, occupiedItem, emptySpaceItem, vipItem, accessibleItem);
         contextMenu.show(hallLayoutGrid, event.getScreenX(), event.getScreenY());
-        System.out.println("Context menu shown at (" + event.getScreenX() + ", " + event.getScreenY() + ")");
     }
 
 

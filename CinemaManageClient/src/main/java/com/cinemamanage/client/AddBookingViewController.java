@@ -5,8 +5,7 @@ import com.cinemamanage.models.Hall;
 import com.cinemamanage.models.Seat;
 import com.cinemamanage.models.Session;
 import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
@@ -24,6 +23,15 @@ public class AddBookingViewController {
 
     @FXML
     private TextField phoneNumberField;
+
+    @FXML
+    private TextField numberOfPeopleField;
+
+    @FXML
+    private TextField distanceField;
+
+    @FXML
+    private ComboBox<String> algorithmComboBox;
 
     private CinemaService cinemaService;
     private Session session;
@@ -43,6 +51,9 @@ public class AddBookingViewController {
         Hall hall = cinemaService.getAllHalls().get(String.valueOf(session.getHallNumber()));
         if (hall != null) {
             int[][] layout = hall.getLayout();
+            for(Seat seat : selectedSeats){
+                layout[seat.getRow()][seat.getColumn()] = Hall.OCCUPIED;
+            }
             for (int i = 0; i < layout.length; i++) {
                 for (int j = 0; j < layout[i].length; j++) {
                     Pane cell = createCell(layout[i][j], i, j);
@@ -62,6 +73,10 @@ public class AddBookingViewController {
         if (isSeatBooked(row, column)) {
             rectangle.setFill(Color.RED);
         }
+        // Highlight already chosen seats
+        if (isSeatChosen(row,column)){
+            rectangle.setFill(Color.GREEN);
+        }
 
         cell.getChildren().add(rectangle);
         cell.setOnMouseClicked(event -> onCellClicked(row, column, rectangle, value));
@@ -70,6 +85,10 @@ public class AddBookingViewController {
 
     private boolean isSeatBooked(int row, int column) {
         return session.getSeats().stream().anyMatch(seat -> seat.getRow() == row && seat.getColumn() == column);
+    }
+
+    private boolean isSeatChosen(int row, int column) {
+        return selectedSeats.stream().anyMatch(seat -> seat.getRow() == row && seat.getColumn() == column);
     }
 
     private void onCellClicked(int row, int column, Rectangle rectangle, int value) {
@@ -130,6 +149,33 @@ public class AddBookingViewController {
         return String.valueOf(maxId + 1);
     }
 
+    @FXML
+    protected void onGenerateSeatsButtonClick() {
+        String algorithm = algorithmComboBox.getValue();
+        String numberOfPeopleStr = numberOfPeopleField.getText();
+        String distanceStr = distanceField.getText();
+
+        if (algorithm == null || numberOfPeopleStr.isEmpty() || distanceStr.isEmpty()) {
+            showAlert("Error", "All fields must be filled.");
+            return;
+        }
+
+        try {
+            int numberOfPeople = Integer.parseInt(numberOfPeopleStr);
+            int distance = Integer.parseInt(distanceStr);
+
+            List<Seat> generatedSeats = cinemaService.generateSeats(session.getSessionId(), numberOfPeople, distance, algorithm);
+            selectedSeats.clear();
+            selectedSeats.addAll(generatedSeats);
+            displayHallLayout(); // Refresh the layout to show the selected seats
+        } catch (NumberFormatException e) {
+            showAlert("Error", "Number of people and distance must be integers.");
+        } catch (IOException e) {
+            showAlert("Error", "Failed to generate seats.");
+            e.printStackTrace();
+        }
+    }
+
     private void showAlert(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle(title);
@@ -137,125 +183,3 @@ public class AddBookingViewController {
         alert.showAndWait();
     }
 }
-
-
-//package com.cinemamanage.client;
-//
-//import com.cinemamanage.models.Hall;
-//import com.cinemamanage.models.Seat;
-//import com.cinemamanage.models.Session;
-//import com.cinemamanage.models.Booking;
-//import javafx.fxml.FXML;
-//import javafx.scene.control.Alert;
-//import javafx.scene.control.TextField;
-//import javafx.scene.layout.GridPane;
-//import javafx.scene.layout.Pane;
-//import javafx.scene.paint.Color;
-//import javafx.scene.shape.Rectangle;
-//import javafx.stage.Stage;
-//
-//import java.io.IOException;
-//import java.util.ArrayList;
-//import java.util.List;
-//
-//public class AddBookingViewController {
-//
-//    @FXML
-//    private GridPane hallLayoutGrid;
-//
-//    @FXML
-//    private TextField phoneNumberField;
-//
-//    private CinemaService cinemaService;
-//    private Session session;
-//    private List<Seat> selectedSeats = new ArrayList<>();
-//
-//    public void setCinemaService(CinemaService cinemaService) {
-//        this.cinemaService = cinemaService;
-//    }
-//
-//    public void setSession(Session session) {
-//        this.session = session;
-//        displayHallLayout();
-//    }
-//
-//    private void displayHallLayout() {
-//        hallLayoutGrid.getChildren().clear();
-//        Hall hall = cinemaService.getAllHalls().get(String.valueOf(session.getHallNumber()));
-//        if (hall != null) {
-//            int[][] layout = hall.getLayout();
-//            for (int i = 0; i < layout.length; i++) {
-//                for (int j = 0; j < layout[i].length; j++) {
-//                    Pane cell = createCell(layout[i][j], i, j);
-//                    hallLayoutGrid.add(cell, j, i);
-//                }
-//            }
-//        }
-//    }
-//
-//    private Pane createCell(int value, int row, int column) {
-//        Pane cell = new Pane();
-//        cell.setPrefSize(30, 30);
-//        Rectangle rectangle = new Rectangle(30, 30);
-//        rectangle.setFill(getColorForValue(value));
-//        cell.getChildren().add(rectangle);
-//        cell.setOnMouseClicked(event -> onCellClicked(row, column, rectangle));
-//        return cell;
-//    }
-//
-//    private void onCellClicked(int row, int column, Rectangle rectangle) {
-//        Seat seat = new Seat(row, column);
-//        if (selectedSeats.contains(seat)) {
-//            selectedSeats.remove(seat);
-//            rectangle.setFill(getColorForValue(Hall.EMPTY)); // Вернуть исходный цвет
-//        } else {
-//            selectedSeats.add(seat);
-//            rectangle.setFill(Color.GREEN); // Подсветить выбранное место
-//        }
-//    }
-//
-//    private Color getColorForValue(int value) {
-//        switch (value) {
-//            case Hall.EMPTY: return Color.WHITE;
-//            case Hall.OCCUPIED: return Color.RED;
-//            case Hall.EMPTY_SPACE: return Color.BLACK;
-//            case Hall.VIP: return Color.BLUE;
-//            case Hall.ACCESSIBLE: return Color.YELLOW;
-//            default: return Color.GRAY;
-//        }
-//    }
-//
-//    @FXML
-//    protected void onBookButtonClick() {
-//        String phoneNumber = phoneNumberField.getText();
-//        if (phoneNumber.isEmpty() || selectedSeats.isEmpty()) {
-//            showAlert("Error", "Phone number and at least one seat must be selected.");
-//            return;
-//        }
-//
-//        try {
-//            for (Seat seat : selectedSeats) {
-//                String bookingId = generateNewBookingId();
-//                Booking newBooking = new Booking(bookingId, session.getSessionId(), seat, phoneNumber);
-//                cinemaService.addBooking(newBooking);
-//            }
-//            Stage stage = (Stage) hallLayoutGrid.getScene().getWindow();
-//            stage.close(); // Закрыть окно после бронирования
-//        } catch (IOException e) {
-//            showAlert("Error", "Failed to add the booking.");
-//            e.printStackTrace();
-//        }
-//    }
-//
-//    private String generateNewBookingId() {
-//        int maxId = cinemaService.getAllBookings().values().stream().mapToInt(booking -> Integer.parseInt(booking.getBookingId())).max().orElse(0);
-//        return String.valueOf(maxId + 1);
-//    }
-//
-//    private void showAlert(String title, String message) {
-//        Alert alert = new Alert(Alert.AlertType.ERROR);
-//        alert.setTitle(title);
-//        alert.setContentText(message);
-//        alert.showAndWait();
-//    }
-//}

@@ -10,6 +10,8 @@ import main.java.dao.BookingDao;
 import main.java.util.ConfigUtil;
 import main.java.seatAllocationAlgorithm.src.IAlgoSeatDistribution;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantReadWriteLock; //synchronization for critical sections
 
@@ -272,10 +274,24 @@ public class CinemaService {
     }
 
     // Seat allocation algorithm
-    public int[] findBestSeats(int[][] seatLayout, int numberOfSeats, int preference) {
+    public List<Seat> findBestSeats(String sessionId, int numberOfSeats, int distance, IAlgoSeatDistribution algorithm) {
         lock.readLock().lock();
         try {
-            return algo.findBestSeats(seatLayout, numberOfSeats, preference);
+            Session session = sessionDao.get(sessionId);
+            int [][] seatLayout = getHall(session.getHallNumber()).getLayout();//return copy of layout
+            for(Seat seat : session.getSeats()) {
+                seatLayout[seat.getRow()][seat.getColumn()] = Hall.OCCUPIED;
+            }
+            int[] bestSeatsIndices = algorithm.findBestSeats(seatLayout, numberOfSeats, distance);
+
+            List<Seat> bestSeats = new ArrayList<>();
+            for (int i = 0; i < bestSeatsIndices.length; i += 2) {
+                int row = bestSeatsIndices[i];
+                int column = bestSeatsIndices[i + 1];
+                bestSeats.add(new Seat(row, column));
+            }
+
+            return bestSeats;
         } finally {
             lock.readLock().unlock();
         }

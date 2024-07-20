@@ -59,6 +59,8 @@ public class HandleRequest implements Runnable {
                 return controller.deleteHall(request.getBody());
             case "hall/getAll":
                 return controller.getAllHalls();
+            case "seat/generate":
+                return controller.generateSeats(request.getBody());
             default:
                 return new Response("error", "Unknown action: " + action);
         }

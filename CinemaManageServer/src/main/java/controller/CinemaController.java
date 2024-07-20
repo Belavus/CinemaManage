@@ -1,12 +1,17 @@
 package main.java.controller;
 
 import com.google.gson.Gson;
+import main.java.models.Seat;
 import main.java.models.Session;
 import main.java.models.Booking;
 import main.java.models.Hall;
 import main.java.seatAllocationAlgorithm.src.BFSMaxDistanceSeatAlgorithm;
+import main.java.seatAllocationAlgorithm.src.IAlgoSeatDistribution;
+import main.java.seatAllocationAlgorithm.src.SimpleMaxDistanceSeatAlgorithm;
 import main.java.services.CinemaService;
 import main.java.server.Response;
+
+import java.util.List;
 import java.util.Map;
 
 public class CinemaController {
@@ -107,4 +112,28 @@ public class CinemaController {
             return new Response("error", e.getMessage());
         }
     }
+
+    public Response generateSeats(Map<String, Object> body) {
+        IAlgoSeatDistribution algorithm;
+        String sessionId = (String) body.get("sessionId");
+        int numberOfPeople = ((Double) body.get("numberOfPeople")).intValue();
+        int distance = ((Double) body.get("distance")).intValue();
+        String algorithmName = (String) body.get("algorithm");
+
+        List<Seat> generatedSeats;
+
+        switch (algorithmName) {
+            case "Simple":
+                algorithm = new SimpleMaxDistanceSeatAlgorithm();
+                break;
+            case "BFS":
+                algorithm = new BFSMaxDistanceSeatAlgorithm();
+                break;
+            default:
+                return new Response("error", "Unknown algorithm: " + algorithmName);
+        }
+        generatedSeats = cinemaService.findBestSeats(sessionId,numberOfPeople,distance,algorithm);
+        return new Response("success", gson.toJson(generatedSeats));
+    }
+
 }

@@ -1,9 +1,9 @@
 package com.cinemamanage.client;
 
+import com.cinemamanage.models.Booking;
 import com.cinemamanage.models.Hall;
 import com.cinemamanage.models.Seat;
 import com.cinemamanage.models.Session;
-import com.cinemamanage.models.Booking;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.TextField;
@@ -57,19 +57,38 @@ public class AddBookingViewController {
         cell.setPrefSize(30, 30);
         Rectangle rectangle = new Rectangle(30, 30);
         rectangle.setFill(getColorForValue(value));
+
+        // Highlight already booked seats
+        if (isSeatBooked(row, column)) {
+            rectangle.setFill(Color.RED);
+        }
+
         cell.getChildren().add(rectangle);
-        cell.setOnMouseClicked(event -> onCellClicked(row, column, rectangle));
+        cell.setOnMouseClicked(event -> onCellClicked(row, column, rectangle, value));
         return cell;
     }
 
-    private void onCellClicked(int row, int column, Rectangle rectangle) {
+    private boolean isSeatBooked(int row, int column) {
+        return session.getSeats().stream().anyMatch(seat -> seat.getRow() == row && seat.getColumn() == column);
+    }
+
+    private void onCellClicked(int row, int column, Rectangle rectangle, int value) {
+        if (value == Hall.EMPTY_SPACE) {
+            showAlert("Error", "Cannot book a seat marked as EMPTY_SPACE.");
+            return;
+        }
+
         Seat seat = new Seat(row, column);
         if (selectedSeats.contains(seat)) {
             selectedSeats.remove(seat);
-            rectangle.setFill(getColorForValue(Hall.EMPTY)); // Вернуть исходный цвет
+            rectangle.setFill(getColorForValue(Hall.EMPTY)); // Return to original color
         } else {
-            selectedSeats.add(seat);
-            rectangle.setFill(Color.GREEN); // Подсветить выбранное место
+            if (isSeatBooked(row, column)) {
+                showAlert("Error", "Seat is already booked.");
+            } else {
+                selectedSeats.add(seat);
+                rectangle.setFill(Color.GREEN); // Highlight selected seat
+            }
         }
     }
 
@@ -99,7 +118,7 @@ public class AddBookingViewController {
                 cinemaService.addBooking(newBooking);
             }
             Stage stage = (Stage) hallLayoutGrid.getScene().getWindow();
-            stage.close(); // Закрыть окно после бронирования
+            stage.close(); // Close window after booking
         } catch (IOException e) {
             showAlert("Error", "Failed to add the booking.");
             e.printStackTrace();
@@ -122,17 +141,17 @@ public class AddBookingViewController {
 
 //package com.cinemamanage.client;
 //
-//import com.cinemamanage.models.Booking;
 //import com.cinemamanage.models.Hall;
 //import com.cinemamanage.models.Seat;
 //import com.cinemamanage.models.Session;
+//import com.cinemamanage.models.Booking;
 //import javafx.fxml.FXML;
 //import javafx.scene.control.Alert;
+//import javafx.scene.control.TextField;
 //import javafx.scene.layout.GridPane;
 //import javafx.scene.layout.Pane;
 //import javafx.scene.paint.Color;
 //import javafx.scene.shape.Rectangle;
-//import javafx.scene.control.TextField;
 //import javafx.stage.Stage;
 //
 //import java.io.IOException;
@@ -180,18 +199,19 @@ public class AddBookingViewController {
 //        Rectangle rectangle = new Rectangle(30, 30);
 //        rectangle.setFill(getColorForValue(value));
 //        cell.getChildren().add(rectangle);
-//        cell.setOnMouseClicked(event -> onCellClicked(row, column));
+//        cell.setOnMouseClicked(event -> onCellClicked(row, column, rectangle));
 //        return cell;
 //    }
 //
-//    private void onCellClicked(int row, int column) {
+//    private void onCellClicked(int row, int column, Rectangle rectangle) {
 //        Seat seat = new Seat(row, column);
 //        if (selectedSeats.contains(seat)) {
 //            selectedSeats.remove(seat);
+//            rectangle.setFill(getColorForValue(Hall.EMPTY)); // Вернуть исходный цвет
 //        } else {
 //            selectedSeats.add(seat);
+//            rectangle.setFill(Color.GREEN); // Подсветить выбранное место
 //        }
-//        displayHallLayout(); // Обновить отображение зала
 //    }
 //
 //    private Color getColorForValue(int value) {
@@ -228,7 +248,6 @@ public class AddBookingViewController {
 //    }
 //
 //    private String generateNewBookingId() {
-//        // Сгенерировать новый bookingId
 //        int maxId = cinemaService.getAllBookings().values().stream().mapToInt(booking -> Integer.parseInt(booking.getBookingId())).max().orElse(0);
 //        return String.valueOf(maxId + 1);
 //    }

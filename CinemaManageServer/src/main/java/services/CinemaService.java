@@ -1,6 +1,8 @@
 package main.java.services;
 
+import main.java.BFSMaxDistanceSeatAlgorithm;
 import main.java.IAlgoSeatDistribution;
+import main.java.SimpleMaxDistanceSeatAlgorithm;
 import main.java.models.Hall;
 import main.java.models.Seat;
 import main.java.models.Session;
@@ -8,6 +10,7 @@ import main.java.models.Booking;
 import main.java.dao.HallDao;
 import main.java.dao.SessionDao;
 import main.java.dao.BookingDao;
+import main.java.server.Response;
 import main.java.util.ConfigUtil;
 
 import java.util.ArrayList;
@@ -16,6 +19,7 @@ import java.util.Map;
 import java.util.concurrent.locks.ReentrantReadWriteLock; //synchronization for critical sections
 
 public class CinemaService {
+    private IAlgoSeatDistribution algorithm;
     private final SessionDao sessionDao;
     private final BookingDao bookingDao;
     private final HallDao hallDao;
@@ -274,7 +278,20 @@ public class CinemaService {
     }
 
     // Seat allocation algorithm
-    public List<Seat> findBestSeats(String sessionId, int numberOfSeats, int distance, IAlgoSeatDistribution algorithm) {
+    public boolean setAlgorithm(String algorithmName) {
+        switch (algorithmName) {
+            case "Simple":
+                this.algorithm = new SimpleMaxDistanceSeatAlgorithm();
+                break;
+            case "BFS":
+                this.algorithm = new BFSMaxDistanceSeatAlgorithm();
+                break;
+            default:
+                return false;
+        }
+        return true;
+    }
+    public List<Seat> findBestSeats(String sessionId, int numberOfSeats, int distance) {
         lock.readLock().lock();
         try {
             Session session = sessionDao.get(sessionId);
@@ -282,7 +299,7 @@ public class CinemaService {
             for(Seat seat : session.getSeats()) {
                 seatLayout[seat.getRow()][seat.getColumn()] = Hall.OCCUPIED;
             }
-            int[] bestSeatsIndices = algorithm.findBestSeats(seatLayout, numberOfSeats, distance);
+            int[] bestSeatsIndices = this.algorithm.findBestSeats(seatLayout, numberOfSeats, distance);
 
             List<Seat> bestSeats = new ArrayList<>();
             for (int i = 0; i < bestSeatsIndices.length; i += 2) {

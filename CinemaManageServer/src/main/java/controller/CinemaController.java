@@ -121,18 +121,21 @@ public class CinemaController {
         String algorithmName = (String) body.get("algorithm");
 
         List<Seat> generatedSeats;
-
-        switch (algorithmName) {
-            case "Simple":
-                algorithm = new SimpleMaxDistanceSeatAlgorithm();
-                break;
-            case "BFS":
-                algorithm = new BFSMaxDistanceSeatAlgorithm();
-                break;
-            default:
-                return new Response("error", "Unknown algorithm: " + algorithmName);
+        if(!cinemaService.setAlgorithm(algorithmName)){
+            return new Response("error", "Unknown algorithm: " + algorithmName);
         }
-        generatedSeats = cinemaService.findBestSeats(sessionId,numberOfPeople,distance,algorithm);
+
+//        switch (algorithmName) {
+//            case "Simple":
+//                algorithm = new SimpleMaxDistanceSeatAlgorithm();
+//                break;
+//            case "BFS":
+//                algorithm = new BFSMaxDistanceSeatAlgorithm();
+//                break;
+//            default:
+//                return new Response("error", "Unknown algorithm: " + algorithmName);
+//        }
+        generatedSeats = cinemaService.findBestSeats(sessionId,numberOfPeople,distance);
         return new Response("success", gson.toJson(generatedSeats));
     }
 

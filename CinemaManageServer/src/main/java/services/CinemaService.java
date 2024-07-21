@@ -10,7 +10,6 @@ import main.java.models.Booking;
 import main.java.dao.HallDao;
 import main.java.dao.SessionDao;
 import main.java.dao.BookingDao;
-import main.java.server.Response;
 import main.java.util.ConfigUtil;
 
 import java.util.ArrayList;
@@ -23,14 +22,12 @@ public class CinemaService {
     private final SessionDao sessionDao;
     private final BookingDao bookingDao;
     private final HallDao hallDao;
-    private final IAlgoSeatDistribution algo;
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
-    public CinemaService(SessionDao sessionDao, BookingDao bookingDao, HallDao hallDao, IAlgoSeatDistribution algo) {
+    public CinemaService(SessionDao sessionDao, BookingDao bookingDao, HallDao hallDao) {
         this.sessionDao = sessionDao;
         this.bookingDao = bookingDao;
         this.hallDao = hallDao;
-        this.algo = algo;
         initializeData();
     }
 
@@ -38,8 +35,7 @@ public class CinemaService {
         this(
                 new SessionDao(ConfigUtil.getProperty("session.file.path")),
                 new BookingDao(ConfigUtil.getProperty("booking.file.path")),
-                new HallDao(ConfigUtil.getProperty("hall.file.path")),
-                algo
+                new HallDao(ConfigUtil.getProperty("hall.file.path"))
         );
     }
 

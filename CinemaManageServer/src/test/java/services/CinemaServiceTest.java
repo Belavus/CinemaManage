@@ -1,5 +1,7 @@
 package test.java.services;
 
+import main.java.BFSMaxDistanceSeatAlgorithm;
+import main.java.IAlgoSeatDistribution;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.AfterEach;
@@ -13,8 +15,6 @@ import main.java.models.Hall;
 import main.java.dao.SessionDao;
 import main.java.dao.BookingDao;
 import main.java.dao.HallDao;
-import main.java.seatAllocationAlgorithm.src.IAlgoSeatDistribution;
-import main.java.seatAllocationAlgorithm.src.BFSMaxDistanceSeatAlgorithm;
 
 import java.util.Arrays;
 import java.util.Map;

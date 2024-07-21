@@ -1,5 +1,6 @@
 package main.java.services;
 
+import main.java.IAlgoSeatDistribution;
 import main.java.models.Hall;
 import main.java.models.Seat;
 import main.java.models.Session;
@@ -8,7 +9,6 @@ import main.java.dao.HallDao;
 import main.java.dao.SessionDao;
 import main.java.dao.BookingDao;
 import main.java.util.ConfigUtil;
-import main.java.seatAllocationAlgorithm.src.IAlgoSeatDistribution;
 
 import java.util.ArrayList;
 import java.util.List;

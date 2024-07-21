@@ -163,9 +163,13 @@ public class AddBookingViewController {
             int distance = Integer.parseInt(distanceStr);
 
             List<Seat> generatedSeats = cinemaService.generateSeats(session.getSessionId(), numberOfPeople, distance, algorithm);
+
             selectedSeats.clear();
             selectedSeats.addAll(generatedSeats);
             displayHallLayout(); // Refresh the layout to show the selected seats
+            if(selectedSeats.size()<numberOfPeople){
+                showAlert("Warning","The number of requested seats exceeds the hall's capacity! "+(numberOfPeople-selectedSeats.size())+" seats could not be selected. Please try a different number or add seats manually!");
+            }
         } catch (NumberFormatException e) {
             showAlert("Error", "Number of people and distance must be integers.");
         } catch (IOException e) {
@@ -175,7 +179,7 @@ public class AddBookingViewController {
     }
 
     private void showAlert(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
+        Alert alert = new Alert(Alert.AlertType.WARNING);
         alert.setTitle(title);
         alert.setContentText(message);
         alert.showAndWait();

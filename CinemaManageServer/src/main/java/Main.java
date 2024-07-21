@@ -1,8 +1,6 @@
 package main.java;
 
 import main.java.models.Hall;
-import main.java.seatAllocationAlgorithm.src.BFSMaxDistanceSeatAlgorithm;
-import main.java.seatAllocationAlgorithm.src.IAlgoSeatDistribution;
 import main.java.services.CinemaService;
 import main.java.models.Session;
 import main.java.models.Seat;

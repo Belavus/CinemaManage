@@ -1,13 +1,13 @@
 package main.java.controller;
 
 import com.google.gson.Gson;
+import main.java.BFSMaxDistanceSeatAlgorithm;
+import main.java.IAlgoSeatDistribution;
+import main.java.SimpleMaxDistanceSeatAlgorithm;
 import main.java.models.Seat;
 import main.java.models.Session;
 import main.java.models.Booking;
 import main.java.models.Hall;
-import main.java.seatAllocationAlgorithm.src.BFSMaxDistanceSeatAlgorithm;
-import main.java.seatAllocationAlgorithm.src.IAlgoSeatDistribution;
-import main.java.seatAllocationAlgorithm.src.SimpleMaxDistanceSeatAlgorithm;
 import main.java.services.CinemaService;
 import main.java.server.Response;
 

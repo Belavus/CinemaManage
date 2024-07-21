@@ -1,8 +1,9 @@
-package com.cinemamanage.client;
+package com.cinemamanage.client.controllers;
 
-import com.cinemamanage.models.Hall;
-import com.cinemamanage.models.Seat;
-import com.cinemamanage.models.Session;
+import com.cinemamanage.client.services.CinemaService;
+import com.cinemamanage.client.models.Hall;
+import com.cinemamanage.client.models.Seat;
+import com.cinemamanage.client.models.Session;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -255,13 +256,13 @@ public class SessionsViewController {
         if (!row.isEmpty()) {
             ContextMenu contextMenu = new ContextMenu();
 
-            MenuItem editItem = new MenuItem("Edit");
-            editItem.setOnAction(e -> onEditSession(row.getItem()));
+//            MenuItem editItem = new MenuItem("Edit");
+//            editItem.setOnAction(e -> onEditSession(row.getItem()));
 
             MenuItem deleteItem = new MenuItem("Delete");
             deleteItem.setOnAction(e -> onDeleteSession(row.getItem()));
 
-            contextMenu.getItems().addAll(editItem, deleteItem);
+            contextMenu.getItems().addAll(/*editItem,*/ deleteItem);
             contextMenu.show(row, event.getScreenX(), event.getScreenY());
         }
     }

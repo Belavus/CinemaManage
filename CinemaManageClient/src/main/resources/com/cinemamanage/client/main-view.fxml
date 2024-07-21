@@ -5,7 +5,7 @@
 
 <?import javafx.scene.control.Button?>
 <VBox alignment="CENTER" spacing="20.0" xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.cinemamanage.client.MainViewController" prefWidth="200" prefHeight="200">
+      fx:controller="com.cinemamanage.client.controllers.MainViewController" prefWidth="200" prefHeight="200">
   <Button text="Halls" onAction="#onHallsButtonClick"/>
   <Button text="Sessions" onAction="#onSessionsButtonClick"/>
   <Button text="Bookings" onAction="#onBookingsButtonClick"/>

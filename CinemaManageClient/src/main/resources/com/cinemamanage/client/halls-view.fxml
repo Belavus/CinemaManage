@@ -10,7 +10,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.cinemamanage.client.HallsViewController"
+<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.cinemamanage.client.controllers.HallsViewController"
             prefWidth="1000" prefHeight="800">
     <top>
         <VBox spacing="10">
@@ -44,7 +44,7 @@
 </BorderPane>
 
 
-<!--<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.cinemamanage.client.HallsViewController">-->
+<!--<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.cinemamanage.client.controllers.HallsViewController">-->
 <!--    <top>-->
 <!--        <VBox spacing="10">-->
 <!--            <HBox spacing="10">-->

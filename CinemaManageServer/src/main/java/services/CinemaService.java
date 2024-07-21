@@ -12,6 +12,9 @@ import main.java.dao.SessionDao;
 import main.java.dao.BookingDao;
 import main.java.util.ConfigUtil;
 
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +26,7 @@ public class CinemaService {
     private final BookingDao bookingDao;
     private final HallDao hallDao;
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     public CinemaService(SessionDao sessionDao, BookingDao bookingDao, HallDao hallDao) {
         this.sessionDao = sessionDao;
@@ -47,15 +51,41 @@ public class CinemaService {
     }
 
     // Manage sessions
-    public void addSession(Session session) {
+    public void addSession(Session session) throws IOException {
         lock.writeLock().lock();
         try {
             if (hallDao.get(String.valueOf(session.getHallNumber())) == null) {
                 throw new IllegalArgumentException("Hall number " + session.getHallNumber() + " does not exist.");
             }
+
+            // Проверка на перекрытие сеансов
+            LocalDateTime startTime = LocalDateTime.parse(session.getTime(), dateTimeFormatter);
+            if (isSessionOverlapping(session.getHallNumber(), startTime, session.getDuration())) {
+                throw new IllegalArgumentException("The session time overlaps with an existing session in the same hall.");
+            }
+
             sessionDao.save(session);
         } finally {
             lock.writeLock().unlock();
+        }
+    }
+
+    public boolean isSessionOverlapping(int hallNumber, LocalDateTime startTime, int duration) {
+        lock.readLock().lock();
+        try {
+            LocalDateTime endTime = startTime.plusMinutes(duration);
+            for (Session session : sessionDao.getAll().values()) {
+                if (session.getHallNumber() == hallNumber) {
+                    LocalDateTime existingStartTime = LocalDateTime.parse(session.getTime(), dateTimeFormatter);
+                    LocalDateTime existingEndTime = existingStartTime.plusMinutes(session.getDuration());
+                    if (startTime.isBefore(existingEndTime) && endTime.isAfter(existingStartTime)) {
+                        return true; // Сеансы перекрываются
+                    }
+                }
+            }
+            return false;
+        } finally {
+            lock.readLock().unlock();
         }
     }
 

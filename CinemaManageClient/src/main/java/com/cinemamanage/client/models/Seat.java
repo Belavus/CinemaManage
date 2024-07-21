@@ -1,4 +1,4 @@
-package com.cinemamanage.models;
+package com.cinemamanage.client.models;
 
 import java.io.Serial;
 import java.io.Serializable;

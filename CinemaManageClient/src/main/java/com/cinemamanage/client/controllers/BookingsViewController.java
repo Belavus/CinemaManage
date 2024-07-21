@@ -1,7 +1,8 @@
-package com.cinemamanage.client;
+package com.cinemamanage.client.controllers;
 
-import com.cinemamanage.models.Booking;
-import com.cinemamanage.models.Session;
+import com.cinemamanage.client.services.CinemaService;
+import com.cinemamanage.client.models.Booking;
+import com.cinemamanage.client.models.Session;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -71,6 +72,8 @@ public class BookingsViewController {
             initializeTableColumns();
             fetchAllSessions();
             fetchAllBookings();
+            sessionsTableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+            bookingsTableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         } catch (IOException e) {
             e.printStackTrace();
         }

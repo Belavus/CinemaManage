@@ -1,5 +1,6 @@
 package com.cinemamanage.client;
 
+import com.cinemamanage.client.controllers.MainViewController;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;

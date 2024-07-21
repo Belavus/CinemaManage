@@ -1,6 +1,7 @@
-package com.cinemamanage.client;
+package com.cinemamanage.client.controllers;
 
-import com.cinemamanage.models.Hall;
+import com.cinemamanage.client.services.CinemaService;
+import com.cinemamanage.client.models.Hall;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;

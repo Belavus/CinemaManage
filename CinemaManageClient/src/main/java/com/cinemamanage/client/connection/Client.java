@@ -1,4 +1,4 @@
-package com.cinemamanage.client;
+package com.cinemamanage.client.connection;
 
 import com.google.gson.Gson;
 

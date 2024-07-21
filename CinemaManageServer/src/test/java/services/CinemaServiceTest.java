@@ -73,20 +73,20 @@ public class CinemaServiceTest {
     }
 
     @Test
-    public void testAddAndGetSession() {
+    public void testAddAndGetSession() throws IOException {
         Seat seat1 = new Seat(1, 1);
         Seat seat2 = new Seat(1, 2);
-        Session session = new Session("1", "Movie", "2024-07-18 20:00", 120, Arrays.asList(seat1, seat2), 1);
+        Session session = new Session("1", "Movie", "2024-07-18 00:00", 60, Arrays.asList(seat1, seat2), 1);
         cinemaService.addSession(session);
 
         Session retrievedSession = cinemaService.getSession("1");
         assertNotNull(retrievedSession);
         assertEquals("Movie", retrievedSession.getMovieName());
-        assertEquals("2024-07-18 20:00", retrievedSession.getTime());
+        assertEquals("2024-07-18 00:00", retrievedSession.getTime());
     }
 
     @Test
-    public void testAddAndGetBooking() {
+    public void testAddAndGetBooking() throws IOException {
         Hall hall = new Hall(1, 5, 5);
         cinemaService.addHall(hall);
 
@@ -120,7 +120,7 @@ public class CinemaServiceTest {
     }
 
     @Test
-    public void testFindBestSeats() {
+    public void testFindBestSeats() throws IOException {
         int[][] layout = {
                 {0, 0, 1, 0, 0},
                 {0, 0, 0, 0, 0},
@@ -142,7 +142,7 @@ public class CinemaServiceTest {
     }
 
     @Test
-    public void testGetAllSessions() {
+    public void testGetAllSessions() throws IOException {
         Seat seat1 = new Seat(1, 1);
         Seat seat2 = new Seat(1, 2);
         Session session = new Session("1", "Movie", "2024-07-18 20:00", 120, Arrays.asList(seat1, seat2), 1);
@@ -155,7 +155,7 @@ public class CinemaServiceTest {
     }
 
     @Test
-    public void testGetAllBookings() {
+    public void testGetAllBookings() throws IOException {
         Hall hall = new Hall(1, 5, 5);
         cinemaService.addHall(hall);
 

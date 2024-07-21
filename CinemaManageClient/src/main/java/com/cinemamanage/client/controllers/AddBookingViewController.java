@@ -1,9 +1,10 @@
-package com.cinemamanage.client;
+package com.cinemamanage.client.controllers;
 
-import com.cinemamanage.models.Booking;
-import com.cinemamanage.models.Hall;
-import com.cinemamanage.models.Seat;
-import com.cinemamanage.models.Session;
+import com.cinemamanage.client.services.CinemaService;
+import com.cinemamanage.client.models.Booking;
+import com.cinemamanage.client.models.Hall;
+import com.cinemamanage.client.models.Seat;
+import com.cinemamanage.client.models.Session;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;

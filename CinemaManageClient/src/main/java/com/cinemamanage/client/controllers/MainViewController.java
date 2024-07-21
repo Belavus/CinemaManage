@@ -1,5 +1,6 @@
-package com.cinemamanage.client;
+package com.cinemamanage.client.controllers;
 
+import com.cinemamanage.client.MainApp;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -19,6 +20,7 @@ public class MainViewController {
         Parent root = loader.load();
         hallsViewController = loader.getController();
         stage.setScene(new Scene(root));
+        stage.centerOnScreen();
     }
 
     @FXML
@@ -26,6 +28,7 @@ public class MainViewController {
         Stage stage = (Stage) MainApp.getPrimaryStage().getScene().getWindow();
         Parent root = FXMLLoader.load(getClass().getResource("/com/cinemamanage/client/sessions-view.fxml"));
         stage.setScene(new Scene(root));
+        stage.centerOnScreen();
     }
 
     @FXML
@@ -33,6 +36,7 @@ public class MainViewController {
         Stage stage = (Stage) MainApp.getPrimaryStage().getScene().getWindow();
         Parent root = FXMLLoader.load(getClass().getResource("/com/cinemamanage/client/bookings-view.fxml"));
         stage.setScene(new Scene(root));
+        stage.centerOnScreen();
     }
 
     public void onClose() {

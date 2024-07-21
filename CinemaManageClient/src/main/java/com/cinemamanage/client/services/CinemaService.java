@@ -1,9 +1,12 @@
-package com.cinemamanage.client;
+package com.cinemamanage.client.services;
 
-import com.cinemamanage.models.Booking;
-import com.cinemamanage.models.Hall;
-import com.cinemamanage.models.Seat;
-import com.cinemamanage.models.Session;
+import com.cinemamanage.client.connection.Client;
+import com.cinemamanage.client.connection.Request;
+import com.cinemamanage.client.connection.Response;
+import com.cinemamanage.client.models.Booking;
+import com.cinemamanage.client.models.Hall;
+import com.cinemamanage.client.models.Seat;
+import com.cinemamanage.client.models.Session;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;

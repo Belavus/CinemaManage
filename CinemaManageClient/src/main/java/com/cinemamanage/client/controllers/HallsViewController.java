@@ -40,11 +40,23 @@ public class HallsViewController {
 
     private Hall currentEditingHall;
 
+    private ContextMenu contextMenu;
+
     @FXML
     public void initialize() {
         try {
             cinemaService = new CinemaService("localhost", 34567);
             fetchAllHalls();
+
+            hallLayoutGrid.sceneProperty().addListener((observable, oldScene, newScene) -> {
+                if (newScene != null) {
+                    newScene.addEventFilter(MouseEvent.MOUSE_PRESSED, event -> {
+                        if (contextMenu != null && contextMenu.isShowing()) {
+                            contextMenu.hide();
+                        }
+                    });
+                }
+            });
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -170,7 +182,7 @@ public class HallsViewController {
     }
 
     private void showContextMenu(MouseEvent event, int row, int column) {
-        ContextMenu contextMenu = new ContextMenu();
+        contextMenu = new ContextMenu();
 
         MenuItem emptyItem = new MenuItem("Empty");
         emptyItem.setOnAction(e -> updateCell(row, column, Hall.EMPTY));
@@ -190,6 +202,7 @@ public class HallsViewController {
         contextMenu.getItems().addAll(emptyItem, occupiedItem, emptySpaceItem, vipItem, accessibleItem);
         contextMenu.show(hallLayoutGrid, event.getScreenX(), event.getScreenY());
     }
+
 
 
     private void updateCell(int row, int column, int value) {

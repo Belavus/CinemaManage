@@ -58,10 +58,6 @@ public class Seat implements Serializable {
 
     @Override
     public String toString() {
-        return "Seat{" +
-                "row=" + row +
-                ", column=" + column +
-                ", isBooked=" + isBooked +
-                '}';
+        return "row:" + row + 1 + ", column:" + column + 1;
     }
 }

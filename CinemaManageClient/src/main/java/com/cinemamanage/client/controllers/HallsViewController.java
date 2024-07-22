@@ -8,8 +8,11 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
@@ -21,6 +24,7 @@ import java.util.Optional;
 
 public class HallsViewController {
 
+    public BorderPane mainPane;
     @FXML
     private ComboBox<String> hallsComboBox;
 
@@ -57,6 +61,18 @@ public class HallsViewController {
                     });
                 }
             });
+
+            // Ensure mainPane is not null
+            assert mainPane != null : "fx:id=\"mainPane\" was not injected: check your FXML file 'sessions-view.fxml'.";
+
+            // Add background image
+            ImageView backgroundImage = new ImageView(new Image(getClass().getResourceAsStream("/images/background.png")));
+            backgroundImage.fitWidthProperty().bind(mainPane.widthProperty());
+            backgroundImage.fitHeightProperty().bind(mainPane.heightProperty());
+            backgroundImage.setPreserveRatio(false);
+
+            // Add the image to the StackPane
+            mainPane.getChildren().add(0, backgroundImage);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -173,12 +189,7 @@ public class HallsViewController {
     private void onCellClicked(MouseEvent event, int row, int column) {
         if (event.getButton() == MouseButton.SECONDARY && this.currentEditingHall != null) {
             showContextMenu(event, row, column);
-        } /*else {*/
-//            int currentValue = currentEditingHall.getLayout()[row][column];
-//            int newValue = (currentValue + 1) % 5; // Assuming 5 different values
-//            currentEditingHall.getLayout()[row][column] = newValue;
-//            displayHallLayout(currentEditingHall); // Refresh the layout
-//        }
+        }
     }
 
     private void showContextMenu(MouseEvent event, int row, int column) {

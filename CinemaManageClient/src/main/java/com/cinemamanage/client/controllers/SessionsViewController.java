@@ -79,7 +79,7 @@ public class SessionsViewController {
     private GridPane hallLayoutGrid;
 
     private CinemaService cinemaService;
-    private DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+    private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
     private ObservableList<Session> allSessions;
 
     private Session selectedSession;
@@ -160,12 +160,18 @@ public class SessionsViewController {
 
     private Color getColorForValue(int value) {
         switch (value) {
-            case Hall.EMPTY: return Color.WHITE;
-            case Hall.OCCUPIED: return Color.RED;
-            case Hall.EMPTY_SPACE: return Color.BLACK;
-            case Hall.VIP: return Color.BLUE;
-            case Hall.ACCESSIBLE: return Color.YELLOW;
-            default: return Color.GRAY;
+            case Hall.EMPTY:
+                return Color.WHITE;
+            case Hall.OCCUPIED:
+                return Color.RED;
+            case Hall.EMPTY_SPACE:
+                return Color.BLACK;
+            case Hall.VIP:
+                return Color.BLUE;
+            case Hall.ACCESSIBLE:
+                return Color.YELLOW;
+            default:
+                return Color.GRAY;
         }
     }
 
@@ -270,24 +276,12 @@ public class SessionsViewController {
         if (!row.isEmpty()) {
             ContextMenu contextMenu = new ContextMenu();
 
-//            MenuItem editItem = new MenuItem("Edit");
-//            editItem.setOnAction(e -> onEditSession(row.getItem()));
-
             MenuItem deleteItem = new MenuItem("Delete");
             deleteItem.setOnAction(e -> onDeleteSession(row.getItem()));
 
             contextMenu.getItems().addAll(/*editItem,*/ deleteItem);
             contextMenu.show(row, event.getScreenX(), event.getScreenY());
         }
-    }
-
-    private void onEditSession(Session session) {
-        selectedSession = session;
-        newMovieNameField.setText(session.getMovieName());
-        newTimeField.setText(session.getTime());
-        newDurationField.setText(String.valueOf(session.getDuration()));
-        newHallComboBox.getSelectionModel().select(String.valueOf(session.getHallNumber()));
-        addNewSessionButton.setText("Save Changes");
     }
 
     private void onDeleteSession(Session session) {

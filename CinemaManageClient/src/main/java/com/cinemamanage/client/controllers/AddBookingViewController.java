@@ -82,14 +82,6 @@ public class AddBookingViewController {
         return cell;
     }
 
-    private boolean isSeatBooked(int row, int column) {
-        return session.getSeats().stream().anyMatch(seat -> seat.getRow() == row && seat.getColumn() == column);
-    }
-
-    private boolean isSeatChosen(int row, int column) {
-        return selectedSeats.stream().anyMatch(seat -> seat.getRow() == row && seat.getColumn() == column);
-    }
-
     private void onCellClicked(int row, int column, Rectangle rectangle, int value) {
         if (value == Hall.EMPTY_SPACE) {
             showAlert("Error", "Cannot book a seat marked as empty space.");
@@ -108,6 +100,14 @@ public class AddBookingViewController {
                 rectangle.setFill(Color.GREEN); // Highlight selected seat
             }
         }
+    }
+
+    private boolean isSeatBooked(int row, int column) {
+        return session.getSeats().stream().anyMatch(seat -> seat.getRow() == row && seat.getColumn() == column);
+    }
+
+    private boolean isSeatChosen(int row, int column) {
+        return selectedSeats.stream().anyMatch(seat -> seat.getRow() == row && seat.getColumn() == column);
     }
 
     private Color getColorForValue(int value) {
@@ -130,24 +130,32 @@ public class AddBookingViewController {
     @FXML
     protected void onBookButtonClick() {
         String phoneNumber = phoneNumberField.getText();
-        if (phoneNumber.isEmpty() || selectedSeats.isEmpty()) {
-            showAlert("Error", "Phone number and at least one seat must be selected.");
-            return;
-        }
 
         try {
+            if (phoneNumber.isEmpty() || selectedSeats.isEmpty()) {
+                showAlert("Error", "Phone number and at least one seat must be selected.");
+                return;
+            }
+
+            if (!phoneNumber.matches("[0-9]{10}")) {
+                throw new NumberFormatException(); // Создание нового экземпляра исключения
+            }
+
             for (Seat seat : selectedSeats) {
                 String bookingId = generateNewBookingId();
                 Booking newBooking = new Booking(bookingId, session.getSessionId(), seat, phoneNumber);
                 cinemaService.addBooking(newBooking);
             }
             Stage stage = (Stage) hallLayoutGrid.getScene().getWindow();
-            stage.close(); // Close window after booking
+            stage.close(); // Закрытие окна после бронирования
         } catch (IOException e) {
             showAlert("Error", "Failed to add the booking.");
             e.printStackTrace();
+        } catch (NumberFormatException e) {
+            showAlert("Error", "Phone number must be 10 digits.");
         }
     }
+
 
     private String generateNewBookingId() {
         int maxId = cinemaService.getAllBookings().values().stream().mapToInt(booking -> Integer.parseInt(booking.getBookingId())).max().orElse(0);

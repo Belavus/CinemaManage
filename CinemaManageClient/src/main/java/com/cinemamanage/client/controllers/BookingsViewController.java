@@ -72,8 +72,8 @@ public class BookingsViewController {
             initializeTableColumns();
             fetchAllSessions();
             fetchAllBookings();
-            sessionsTableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-            bookingsTableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+            sessionsTableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+            bookingsTableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
         } catch (IOException e) {
             e.printStackTrace();
         }

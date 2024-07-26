@@ -8,11 +8,8 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
@@ -69,23 +66,6 @@ public class HallsViewController {
         cinemaService.fetchAllHalls();
         hallsComboBox.setItems(FXCollections.observableArrayList(cinemaService.getAllHalls().keySet()));
     }
-
-//    @FXML
-//    protected void onGetAllHallsButtonClick() {
-//        try {
-//            fetchAllHalls();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//    }
-
-//    @FXML
-//    protected void onNewHallButtonClick() {
-//        hallLayoutGrid.getChildren().clear();
-//        rowsField.clear();
-//        columnsField.clear();
-//        hallNumberField.clear();
-//    }
 
     @FXML
     protected void onCreateNewHallButtonClick() {
@@ -232,12 +212,18 @@ public class HallsViewController {
 
     private Color getColorForValue(int value) {
         switch (value) {
-            case Hall.EMPTY: return Color.WHITE;
-            case Hall.OCCUPIED: return Color.RED;
-            case Hall.EMPTY_SPACE: return Color.BLACK;
-            case Hall.VIP: return Color.BLUE;
-            case Hall.ACCESSIBLE: return Color.YELLOW;
-            default: return Color.GRAY;
+            case Hall.EMPTY:
+                return Color.WHITE;
+            case Hall.OCCUPIED:
+                return Color.RED;
+            case Hall.EMPTY_SPACE:
+                return Color.BLACK;
+            case Hall.VIP:
+                return Color.BLUE;
+            case Hall.ACCESSIBLE:
+                return Color.YELLOW;
+            default:
+                return Color.GRAY;
         }
     }
 

@@ -3,67 +3,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<!--<?xml version="1.0" encoding="UTF-8"?>-->
-<!--<?import javafx.geometry.Insets?>-->
-<!--<?import javafx.scene.control.Button?>-->
-<!--<?import javafx.scene.control.ComboBox?>-->
-<!--<?import javafx.scene.control.Label?>-->
-<!--<?import javafx.scene.control.TableColumn?>-->
-<!--<?import javafx.scene.control.TableView?>-->
-<!--<?import javafx.scene.control.TextField?>-->
-<!--<?import javafx.scene.layout.BorderPane?>-->
-<!--<?import javafx.scene.layout.HBox?>-->
-<!--<?import javafx.scene.layout.VBox?>-->
-<!--<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.cinemamanage.client.controllers.BookingsViewController" >-->
-<!--    <top>-->
-<!--        <VBox spacing="10">-->
-<!--            <HBox spacing="10">-->
-<!--                <Label text="Filter Sessions: "/>-->
-<!--                <ComboBox fx:id="movieNameComboBox" promptText="Movie Name"/>-->
-<!--                <ComboBox fx:id="timeComboBox" promptText="Time"/>-->
-<!--                <ComboBox fx:id="hallNumberComboBox" promptText="Hall Number"/>-->
-<!--                <Button text="Filter" onAction="#onFilterSessions"/>-->
-<!--            </HBox>-->
-<!--            <HBox spacing="10">-->
-<!--                <Label text="Filter Bookings: "/>-->
-<!--                <TextField fx:id="phoneFilterField" promptText="Phone Number"/>-->
-<!--                <Button text="Filter" onAction="#onFilterBookings"/>-->
-<!--            </HBox>-->
-<!--        </VBox>-->
-<!--    </top>-->
-<!--    <center>-->
-<!--        <HBox spacing="10">-->
-<!--            <VBox>-->
-<!--                <Label text="Sessions"/>-->
-<!--                <TableView fx:id="sessionsTableView">-->
-<!--                    <columns>-->
-<!--                        <TableColumn fx:id="sessionIdColumn" text="Session ID"/>-->
-<!--                        <TableColumn fx:id="movieNameColumn" text="Movie Name"/>-->
-<!--                        <TableColumn fx:id="timeColumn" text="Time"/>-->
-<!--                        <TableColumn fx:id="hallNumberColumn" text="Hall Number"/>-->
-<!--                    </columns>-->
-<!--                </TableView>-->
-<!--                <Button text="Add Booking" onAction="#onAddBookingButtonClick"/>-->
-<!--            </VBox>-->
-<!--            <VBox>-->
-<!--                <Label text="Bookings"/>-->
-<!--                <TableView fx:id="bookingsTableView">-->
-<!--                    <columns>-->
-<!--                        <TableColumn fx:id="bookingIdColumn" text="Booking ID"/>-->
-<!--                        <TableColumn fx:id="phoneNumberColumn" text="Phone Number"/>-->
-<!--                        <TableColumn fx:id="seatColumn" text="Seat"/>-->
-<!--                    </columns>-->
-<!--                </TableView>-->
-<!--                <Button text="Delete Booking" onAction="#onDeleteBookingButtonClick"/>-->
-<!--            </VBox>-->
-<!--        </HBox>-->
-<!--    </center>-->
-<!--    <bottom>-->
-<!--        <Button text="Back" onAction="#onBackButtonClick"/>-->
-<!--    </bottom>-->
-<!--</BorderPane>-->
-
-<BorderPane prefHeight="527.0" prefWidth="907.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/17.0.2-ea" fx:controller="com.cinemamanage.client.controllers.BookingsViewController">
+<BorderPane prefHeight="527.0" prefWidth="907.0" stylesheets="@../css/styles.css" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.cinemamanage.client.controllers.BookingsViewController">
     <top>
         <VBox spacing="10">
             <HBox spacing="10">

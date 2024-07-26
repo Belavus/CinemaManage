@@ -4,9 +4,10 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.shape.*?>
+
 <BorderPane prefHeight="800" prefWidth="1000" xmlns:fx="http://javafx.com/fxml/1"
             xmlns="http://javafx.com/javafx/17.0.2-ea"
-            fx:controller="com.cinemamanage.client.controllers.HallsViewController" fx:id="mainPane">
+            fx:controller="com.cinemamanage.client.controllers.HallsViewController" stylesheets="@../css/styles.css">
     <top>
         <VBox spacing="10">
             <HBox spacing="10">

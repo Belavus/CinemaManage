@@ -4,49 +4,50 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<BorderPane xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/17.0.2-ea" fx:controller="com.cinemamanage.client.controllers.SessionsViewController">
+<BorderPane xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/17.0.2-ea"
+            fx:controller="com.cinemamanage.client.controllers.SessionsViewController" stylesheets="@../css/styles.css">
     <top>
         <VBox spacing="10">
             <HBox spacing="10">
-                <Label text="Movie Name:" />
-                <TextField fx:id="newMovieNameField" />
-                <Label text="Time:" />
-                <TextField fx:id="newTimeField" />
-                <Label text="Duration:" />
-                <TextField fx:id="newDurationField" />
-                <Label text="Hall Number:" />
-                <ComboBox fx:id="newHallComboBox" />
-                <Button fx:id="addNewSessionButton" onAction="#onAddNewSessionButtonClick" text="Add New Session" />
+                <Label text="Movie Name:"/>
+                <TextField fx:id="newMovieNameField"/>
+                <Label text="Time:"/>
+                <TextField fx:id="newTimeField"/>
+                <Label text="Duration:"/>
+                <TextField fx:id="newDurationField"/>
+                <Label text="Hall Number:"/>
+                <ComboBox fx:id="newHallComboBox"/>
+                <Button fx:id="addNewSessionButton" onAction="#onAddNewSessionButtonClick" text="Add New Session"/>
             </HBox>
             <HBox spacing="10">
-                <Label text="Filter: " />
-                <Label text="Movie Name:" />
-                <TextField fx:id="movieNameField" />
-                <Label text="Time:" />
-                <TextField fx:id="timeField" />
-                <Label text="Hall Number:" />
-                <TextField fx:id="hallNumberField" />
-                <Button onAction="#onFilterButtonClick" text="Filter" />
+                <Label text="Filter: "/>
+                <Label text="Movie Name:"/>
+                <TextField fx:id="movieNameField"/>
+                <Label text="Time:"/>
+                <TextField fx:id="timeField"/>
+                <Label text="Hall Number:"/>
+                <TextField fx:id="hallNumberField"/>
+                <Button onAction="#onFilterButtonClick" text="Filter"/>
             </HBox>
         </VBox>
     </top>
     <center>
         <TableView fx:id="sessionsTableView">
             <columns>
-                <TableColumn fx:id="sessionIdColumn" text="Session ID" />
-                <TableColumn fx:id="movieNameColumn" text="Movie Name" />
-                <TableColumn fx:id="timeColumn" text="Time" />
-                <TableColumn fx:id="durationColumn" text="Duration" />
-                <TableColumn fx:id="hallNumberColumn" text="Hall Number" />
+                <TableColumn fx:id="sessionIdColumn" text="Session ID"/>
+                <TableColumn fx:id="movieNameColumn" text="Movie Name"/>
+                <TableColumn fx:id="timeColumn" text="Time"/>
+                <TableColumn fx:id="durationColumn" text="Duration"/>
+                <TableColumn fx:id="hallNumberColumn" text="Hall Number"/>
             </columns>
         </TableView>
     </center>
     <bottom>
         <GridPane fx:id="hallLayoutGrid" hgap="5" vgap="5">
             <padding>
-                <Insets bottom="10" left="10" right="10" top="10" />
+                <Insets bottom="10" left="10" right="10" top="10"/>
             </padding>
         </GridPane>
-        <Button onAction="#onBackButtonClick" text="Back" BorderPane.alignment="BOTTOM_LEFT" />
+        <Button onAction="#onBackButtonClick" text="Back" BorderPane.alignment="BOTTOM_LEFT"/>
     </bottom>
 </BorderPane>

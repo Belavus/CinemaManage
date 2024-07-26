@@ -73,7 +73,7 @@ public class AddBookingViewController {
         }
 
         // Highlight already chosen seats
-        if (isSeatChosen(row,column)){
+        if (isSeatChosen(row, column)) {
             rectangle.setFill(Color.GREEN);
         }
 
@@ -92,7 +92,7 @@ public class AddBookingViewController {
 
     private void onCellClicked(int row, int column, Rectangle rectangle, int value) {
         if (value == Hall.EMPTY_SPACE) {
-            showAlert("Error", "Cannot book a seat marked as EMPTY_SPACE.");
+            showAlert("Error", "Cannot book a seat marked as empty space.");
             return;
         }
 
@@ -112,12 +112,18 @@ public class AddBookingViewController {
 
     private Color getColorForValue(int value) {
         switch (value) {
-            case Hall.EMPTY: return Color.WHITE;
-            case Hall.OCCUPIED: return Color.RED;
-            case Hall.EMPTY_SPACE: return Color.BLACK;
-            case Hall.VIP: return Color.BLUE;
-            case Hall.ACCESSIBLE: return Color.YELLOW;
-            default: return Color.GRAY;
+            case Hall.EMPTY:
+                return Color.WHITE;
+            case Hall.OCCUPIED:
+                return Color.RED;
+            case Hall.EMPTY_SPACE:
+                return Color.BLACK;
+            case Hall.VIP:
+                return Color.BLUE;
+            case Hall.ACCESSIBLE:
+                return Color.YELLOW;
+            default:
+                return Color.GRAY;
         }
     }
 
@@ -168,8 +174,8 @@ public class AddBookingViewController {
             selectedSeats.clear();
             selectedSeats.addAll(generatedSeats);
             displayHallLayout(); // Refresh the layout to show the selected seats
-            if(selectedSeats.size()<numberOfPeople){
-                showAlert("Warning","The number of requested seats exceeds the hall's capacity! "+(numberOfPeople-selectedSeats.size())+" seats could not be selected. Please try a different number or add seats manually!");
+            if (selectedSeats.size() < numberOfPeople) {
+                showAlert("Warning", "The number of requested seats exceeds the hall's capacity! " + (numberOfPeople - selectedSeats.size()) + " seats could not be selected. Please try a different number or add seats manually!");
             }
         } catch (NumberFormatException e) {
             showAlert("Error", "Number of people and distance must be integers.");

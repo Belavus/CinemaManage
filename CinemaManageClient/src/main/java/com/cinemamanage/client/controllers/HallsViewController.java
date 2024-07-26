@@ -24,7 +24,6 @@ import java.util.Optional;
 
 public class HallsViewController {
 
-    public BorderPane mainPane;
     @FXML
     private ComboBox<String> hallsComboBox;
 
@@ -61,18 +60,6 @@ public class HallsViewController {
                     });
                 }
             });
-
-            // Ensure mainPane is not null
-            assert mainPane != null : "fx:id=\"mainPane\" was not injected: check your FXML file 'sessions-view.fxml'.";
-
-            // Add background image
-            ImageView backgroundImage = new ImageView(new Image(getClass().getResourceAsStream("/images/background.png")));
-            backgroundImage.fitWidthProperty().bind(mainPane.widthProperty());
-            backgroundImage.fitHeightProperty().bind(mainPane.heightProperty());
-            backgroundImage.setPreserveRatio(false);
-
-            // Add the image to the StackPane
-            mainPane.getChildren().add(0, backgroundImage);
         } catch (IOException e) {
             e.printStackTrace();
         }

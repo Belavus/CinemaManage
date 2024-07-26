@@ -1,7 +1,5 @@
 package test.java.services;
 
-import main.java.BFSMaxDistanceSeatAlgorithm;
-import main.java.IAlgoSeatDistribution;
 import main.java.services.CinemaService;
 import main.java.models.Session;
 import main.java.models.Seat;
@@ -43,7 +41,7 @@ public class CinemaServiceTest {
         HallDao hallDao = new HallDao(hallFile.getAbsolutePath());
 
         cinemaService = new CinemaService(sessionDao, bookingDao, hallDao);
-        cinemaService.setAlgorithm("BFS"); // Используем BFS алгоритм по умолчанию
+        cinemaService.setAlgorithm("BFS");
     }
 
     @AfterAll
@@ -62,14 +60,13 @@ public class CinemaServiceTest {
     private static File createInitializedFile(String filename) throws IOException {
         File file = File.createTempFile(filename, ".ser");
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file))) {
-            oos.writeObject(new HashMap<>()); // Записываем пустую карту
+            oos.writeObject(new HashMap<>());
         }
         return file;
     }
 
     @BeforeEach
     public void initializeData() {
-        // Инициализация данных перед каждым тестом
     }
 
     @Test

@@ -5,7 +5,7 @@ import java.io.InputStream;
 import java.util.Properties;
 
 public class ConfigUtil {
-    private static final String CONFIG_FILE = "config.properties"; // Правильный путь
+    private static final String CONFIG_FILE = "config.properties";
     private static Properties properties = new Properties();
 
     static {

@@ -33,7 +33,7 @@ public class CinemaService {
         fetchAllData();
     }
 
-    public void fetchAllData() throws IOException {
+        public void fetchAllData() throws IOException {
         fetchAllHalls();
         fetchAllSessions();
         fetchAllBookings();
@@ -41,55 +41,62 @@ public class CinemaService {
 
     public void fetchAllHalls() throws IOException {
         client.connect();
-        Request request = new Request();
-        Map<String, String> headers = new HashMap<>();
-        headers.put("action", "hall/getAll");
-        request.setHeaders(headers);
+        try {
+            Request request = new Request();
+            Map<String, String> headers = new HashMap<>();
+            headers.put("action", "hall/getAll");
+            request.setHeaders(headers);
 
-        Response response = client.sendRequest(request);
-
-        if ("success".equals(response.getStatus())) {
-            Type hallMapType = new TypeToken<Map<String, Hall>>() {}.getType();
-            halls = gson.fromJson(response.getMessage(), hallMapType);
-        } else {
-            throw new IOException("Error fetching halls: " + response.getMessage());
+            Response response = client.sendRequest(request);
+            if ("success".equals(response.getStatus())) {
+                Type hallMapType = new TypeToken<Map<String, Hall>>() {}.getType();
+                halls = gson.fromJson(response.getMessage(), hallMapType);
+            } else {
+                throw new IOException("Error fetching halls: " + response.getMessage());
+            }
+        } finally {
+            client.disconnect();
         }
-        client.disconnect();
     }
 
     public void fetchAllSessions() throws IOException {
         client.connect();
-        Request request = new Request();
-        Map<String, String> headers = new HashMap<>();
-        headers.put("action", "session/getAll");
-        request.setHeaders(headers);
+        try {
+            Request request = new Request();
+            Map<String, String> headers = new HashMap<>();
+            headers.put("action", "session/getAll");
+            request.setHeaders(headers);
 
-        Response response = client.sendRequest(request);
-
-        if ("success".equals(response.getStatus())) {
-            Type sessionMapType = new TypeToken<Map<String, Session>>() {}.getType();
-            sessions = gson.fromJson(response.getMessage(), sessionMapType);
-        } else {
-            throw new IOException("Error fetching sessions: " + response.getMessage());
+            Response response = client.sendRequest(request);
+            if ("success".equals(response.getStatus())) {
+                Type sessionMapType = new TypeToken<Map<String, Session>>() {}.getType();
+                sessions = gson.fromJson(response.getMessage(), sessionMapType);
+            } else {
+                throw new IOException("Error fetching sessions: " + response.getMessage());
+            }
+        } finally {
+            client.disconnect();
         }
-        client.disconnect();
     }
 
     public void fetchAllBookings() throws IOException {
         client.connect();
-        Request request = new Request();
-        Map<String, String> headers = new HashMap<>();
-        headers.put("action", "booking/getAll");
-        request.setHeaders(headers);
+        try {
+            Request request = new Request();
+            Map<String, String> headers = new HashMap<>();
+            headers.put("action", "booking/getAll");
+            request.setHeaders(headers);
 
-        Response response = client.sendRequest(request);
-        if ("success".equals(response.getStatus())) {
-            Type bookingMapType = new TypeToken<Map<String, Booking>>() {}.getType();
-            bookings = gson.fromJson(response.getMessage(), bookingMapType);
-        } else {
-            throw new IOException("Error fetching bookings: " + response.getMessage());
+            Response response = client.sendRequest(request);
+            if ("success".equals(response.getStatus())) {
+                Type bookingMapType = new TypeToken<Map<String, Booking>>() {}.getType();
+                bookings = gson.fromJson(response.getMessage(), bookingMapType);
+            } else {
+                throw new IOException("Error fetching bookings: " + response.getMessage());
+            }
+        } finally {
+            client.disconnect();
         }
-        client.disconnect();
     }
 
     public Map<String, Hall> getAllHalls() {
@@ -106,137 +113,159 @@ public class CinemaService {
 
     public void addHall(Hall hall) throws IOException {
         client.connect();
-        Request request = new Request();
-        Map<String, String> headers = new HashMap<>();
-        headers.put("action", "hall/add");
-        request.setHeaders(headers);
-        Map<String, Object> body = new HashMap<>();
-        body.put("hall", hall);
-        request.setBody(body);
+        try {
+            Request request = new Request();
+            Map<String, String> headers = new HashMap<>();
+            headers.put("action", "hall/add");
+            request.setHeaders(headers);
+            Map<String, Object> body = new HashMap<>();
+            body.put("hall", hall);
+            request.setBody(body);
 
-        Response response = client.sendRequest(request);
-        if ("success".equals(response.getStatus())) {
-            halls.put(String.valueOf(hall.getHallNumber()), hall);
-        } else {
-            throw new IOException("Error adding hall: " + response.getMessage());
+            Response response = client.sendRequest(request);
+            if ("success".equals(response.getStatus())) {
+                halls.put(String.valueOf(hall.getHallNumber()), hall);
+            } else {
+                throw new IOException("Error adding hall: " + response.getMessage());
+            }
+        } finally {
+            client.disconnect();
         }
-        client.disconnect();
     }
 
     public void deleteHall(int hallNumber) throws IOException {
         client.connect();
-        Request request = new Request();
-        Map<String, String> headers = new HashMap<>();
-        headers.put("action", "hall/delete");
-        request.setHeaders(headers);
-        Map<String, Object> body = new HashMap<>();
-        body.put("hallNumber", hallNumber);
-        request.setBody(body);
+        try {
+            Request request = new Request();
+            Map<String, String> headers = new HashMap<>();
+            headers.put("action", "hall/delete");
+            request.setHeaders(headers);
+            Map<String, Object> body = new HashMap<>();
+            body.put("hallNumber", hallNumber);
+            request.setBody(body);
 
-        Response response = client.sendRequest(request);
-        if ("success".equals(response.getStatus())) {
-            halls.remove(String.valueOf(hallNumber));
-        } else {
-            throw new IOException("Error deleting hall: " + response.getMessage());
+            Response response = client.sendRequest(request);
+            if ("success".equals(response.getStatus())) {
+                halls.remove(String.valueOf(hallNumber));
+            } else {
+                throw new IOException("Error deleting hall: " + response.getMessage());
+            }
+        } finally {
+            client.disconnect();
         }
-        client.disconnect();
     }
 
     public void addSession(Session session) throws IOException {
         client.connect();
-        Request request = new Request();
-        Map<String, String> headers = new HashMap<>();
-        headers.put("action", "session/add");
-        request.setHeaders(headers);
-        Map<String, Object> body = new HashMap<>();
-        body.put("session", session);
-        request.setBody(body);
+        try {
+            Request request = new Request();
+            Map<String, String> headers = new HashMap<>();
+            headers.put("action", "session/add");
+            request.setHeaders(headers);
+            Map<String, Object> body = new HashMap<>();
+            body.put("session", session);
+            request.setBody(body);
 
-        Response response = client.sendRequest(request);
-        if ("success".equals(response.getStatus())) {
-            sessions.put(session.getSessionId(), session);
-        } else {
-            throw new IOException("Error adding session: " + response.getMessage());
+            Response response = client.sendRequest(request);
+            if ("success".equals(response.getStatus())) {
+                sessions.put(session.getSessionId(), session);
+            } else {
+                throw new IOException("Error adding session: " + response.getMessage());
+            }
+        } finally {
+            client.disconnect();
         }
-        client.disconnect();
     }
 
     public void deleteSession(String sessionId) throws IOException {
         client.connect();
-        Request request = new Request();
-        Map<String, String> headers = new HashMap<>();
-        headers.put("action", "session/delete");
-        request.setHeaders(headers);
-        Map<String, Object> body = new HashMap<>();
-        body.put("sessionId", sessionId);
-        request.setBody(body);
+        try {
+            Request request = new Request();
+            Map<String, String> headers = new HashMap<>();
+            headers.put("action", "session/delete");
+            request.setHeaders(headers);
+            Map<String, Object> body = new HashMap<>();
+            body.put("sessionId", sessionId);
+            request.setBody(body);
 
-        Response response = client.sendRequest(request);
-        if ("success".equals(response.getStatus())) {
-            sessions.remove(sessionId);
-        } else {
-            throw new IOException("Error deleting session: " + response.getMessage());
+            Response response = client.sendRequest(request);
+            if ("success".equals(response.getStatus())) {
+                sessions.remove(sessionId);
+            } else {
+                throw new IOException("Error deleting session: " + response.getMessage());
+            }
+        } finally {
+            client.disconnect();
         }
-        client.disconnect();
     }
 
     public void addBooking(Booking booking) throws IOException {
         client.connect();
-        Request request = new Request();
-        Map<String, String> headers = new HashMap<>();
-        headers.put("action", "booking/add");
-        request.setHeaders(headers);
-        Map<String, Object> body = new HashMap<>();
-        body.put("booking", booking);
-        request.setBody(body);
+        try {
+            Request request = new Request();
+            Map<String, String> headers = new HashMap<>();
+            headers.put("action", "booking/add");
+            request.setHeaders(headers);
+            Map<String, Object> body = new HashMap<>();
+            body.put("booking", booking);
+            request.setBody(body);
 
-        Response response = client.sendRequest(request);
-        if ("success".equals(response.getStatus())) {
-            bookings.put(booking.getBookingId(), booking);
-        } else {
-            throw new IOException("Error adding booking: " + response.getMessage());
+            Response response = client.sendRequest(request);
+            if ("success".equals(response.getStatus())) {
+                bookings.put(booking.getBookingId(), booking);
+            } else {
+                throw new IOException("Error adding booking: " + response.getMessage());
+            }
+        } finally {
+            client.disconnect();
         }
-        client.disconnect();
     }
 
     public void deleteBooking(String bookingId) throws IOException {
         client.connect();
-        Request request = new Request();
-        Map<String, String> headers = new HashMap<>();
-        headers.put("action", "booking/delete");
-        request.setHeaders(headers);
-        Map<String, Object> body = new HashMap<>();
-        body.put("bookingId", bookingId);
-        request.setBody(body);
+        try {
+            Request request = new Request();
+            Map<String, String> headers = new HashMap<>();
+            headers.put("action", "booking/delete");
+            request.setHeaders(headers);
+            Map<String, Object> body = new HashMap<>();
+            body.put("bookingId", bookingId);
+            request.setBody(body);
 
-        Response response = client.sendRequest(request);
-        if ("success".equals(response.getStatus())) {
-            bookings.remove(bookingId);
-        } else {
-            throw new IOException("Error deleting booking: " + response.getMessage());
+            Response response = client.sendRequest(request);
+            if ("success".equals(response.getStatus())) {
+                bookings.remove(bookingId);
+            } else {
+                throw new IOException("Error deleting booking: " + response.getMessage());
+            }
+        } finally {
+            client.disconnect();
         }
-        client.disconnect();
     }
 
     public List<Seat> generateSeats(String sessionId, int numberOfPeople, int distance, String algorithm) throws IOException {
         client.connect();
-        Request request = new Request();
-        Map<String, String> headers = new HashMap<>();
-        headers.put("action", "seat/generate");
-        request.setHeaders(headers);
-        Map<String, Object> body = new HashMap<>();
-        body.put("sessionId", sessionId);
-        body.put("numberOfPeople", numberOfPeople);
-        body.put("distance", distance);
-        body.put("algorithm", algorithm);
-        request.setBody(body);
+        try {
+            Request request = new Request();
+            Map<String, String> headers = new HashMap<>();
+            headers.put("action", "seat/generate");
+            request.setHeaders(headers);
+            Map<String, Object> body = new HashMap<>();
+            body.put("sessionId", sessionId);
+            body.put("numberOfPeople", numberOfPeople);
+            body.put("distance", distance);
+            body.put("algorithm", algorithm);
+            request.setBody(body);
 
-        Response response = client.sendRequest(request);
-        if ("success".equals(response.getStatus())) {
-            Type seatListType = new TypeToken<List<Seat>>() {}.getType();
-            return gson.fromJson(response.getMessage(), seatListType);
-        } else {
-            throw new IOException("Error generating seats: " + response.getMessage());
+            Response response = client.sendRequest(request);
+            if ("success".equals(response.getStatus())) {
+                Type seatListType = new TypeToken<List<Seat>>() {}.getType();
+                return gson.fromJson(response.getMessage(), seatListType);
+            } else {
+                throw new IOException("Error generating seats: " + response.getMessage());
+            }
+        } finally {
+            client.disconnect();
         }
     }
 

@@ -1,8 +1,7 @@
 Folder PATH listing
 Volume serial number is 8259-3AF2
 D:.
-|   structureClient.txt
-|   tree.txt
+|   structure.txt
 |   
 +---.idea
 |       CinemaManage.iml
@@ -39,33 +38,45 @@ D:.
 |   |       |   |   
 |   |       |   \---com
 |   |       |       \---cinemamanage
-|   |       |           +---client
-|   |       |           |       AddBookingViewController.java
-|   |       |           |       BookingsViewController.java
-|   |       |           |       CinemaService.java
-|   |       |           |       Client.java
-|   |       |           |       HallsViewController.java
-|   |       |           |       MainApp.java
-|   |       |           |       MainViewController.java
-|   |       |           |       Request.java
-|   |       |           |       Response.java
-|   |       |           |       SessionsViewController.java
-|   |       |           |       
-|   |       |           \---models
-|   |       |                   Booking.java
-|   |       |                   Hall.java
-|   |       |                   Seat.java
-|   |       |                   Session.java
-|   |       |                   
+|   |       |           \---client
+|   |       |               |   MainApp.java
+|   |       |               |   
+|   |       |               +---connection
+|   |       |               |       Client.java
+|   |       |               |       Request.java
+|   |       |               |       Response.java
+|   |       |               |       
+|   |       |               +---controllers
+|   |       |               |       AddBookingViewController.java
+|   |       |               |       BookingsViewController.java
+|   |       |               |       HallsViewController.java
+|   |       |               |       MainViewController.java
+|   |       |               |       SessionsViewController.java
+|   |       |               |       
+|   |       |               +---models
+|   |       |               |       Booking.java
+|   |       |               |       Hall.java
+|   |       |               |       Seat.java
+|   |       |               |       Session.java
+|   |       |               |       
+|   |       |               \---services
+|   |       |                       CinemaService.java
+|   |       |                       
 |   |       \---resources
 |   |           \---com
 |   |               \---cinemamanage
-|   |                   \---client
-|   |                           add-booking-view.fxml
-|   |                           bookings-view.fxml
-|   |                           halls-view.fxml
-|   |                           main-view.fxml
-|   |                           sessions-view.fxml
+|   |                   +---client
+|   |                   |       add-booking-view.fxml
+|   |                   |       bookings-view.fxml
+|   |                   |       halls-view.fxml
+|   |                   |       main-view.fxml
+|   |                   |       sessions-view.fxml
+|   |                   |       
+|   |                   +---css
+|   |                   |       styles.css
+|   |                   |       
+|   |                   \---images
+|   |                           main_view_background_2.png
 |   |                           
 |   \---target
 |       +---classes
@@ -74,30 +85,43 @@ D:.
 |       |   \---com
 |       |       \---cinemamanage
 |       |           +---client
-|       |           |       add-booking-view.fxml
-|       |           |       AddBookingViewController.class
-|       |           |       bookings-view.fxml
-|       |           |       BookingsViewController.class
-|       |           |       CinemaService$1.class
-|       |           |       CinemaService$2.class
-|       |           |       CinemaService$3.class
-|       |           |       CinemaService.class
-|       |           |       Client.class
-|       |           |       halls-view.fxml
-|       |           |       HallsViewController.class
-|       |           |       main-view.fxml
-|       |           |       MainApp.class
-|       |           |       MainViewController.class
-|       |           |       Request.class
-|       |           |       Response.class
-|       |           |       sessions-view.fxml
-|       |           |       SessionsViewController.class
+|       |           |   |   add-booking-view.fxml
+|       |           |   |   bookings-view.fxml
+|       |           |   |   halls-view.fxml
+|       |           |   |   main-view.fxml
+|       |           |   |   MainApp.class
+|       |           |   |   sessions-view.fxml
+|       |           |   |   
+|       |           |   +---connection
+|       |           |   |       Client.class
+|       |           |   |       Request.class
+|       |           |   |       Response.class
+|       |           |   |       
+|       |           |   +---controllers
+|       |           |   |       AddBookingViewController.class
+|       |           |   |       BookingsViewController.class
+|       |           |   |       HallsViewController.class
+|       |           |   |       MainViewController.class
+|       |           |   |       SessionsViewController.class
+|       |           |   |       
+|       |           |   +---models
+|       |           |   |       Booking.class
+|       |           |   |       Hall.class
+|       |           |   |       Seat.class
+|       |           |   |       Session.class
+|       |           |   |       
+|       |           |   \---services
+|       |           |           CinemaService$1.class
+|       |           |           CinemaService$2.class
+|       |           |           CinemaService$3.class
+|       |           |           CinemaService$4.class
+|       |           |           CinemaService.class
+|       |           |           
+|       |           +---css
+|       |           |       styles.css
 |       |           |       
-|       |           \---models
-|       |                   Booking.class
-|       |                   Hall.class
-|       |                   Seat.class
-|       |                   Session.class
+|       |           \---images
+|       |                   main_view_background_2.png
 |       |                   
 |       +---generated-sources
 |       |   \---annotations
@@ -116,6 +140,7 @@ D:.
     |   |   .gitignore
     |   |   misc.xml
     |   |   modules.xml
+    |   |   uiDesigner.xml
     |   |   vcs.xml
     |   |   workspace.xml
     |   |   
@@ -155,7 +180,11 @@ D:.
     |           |   |   |       Client.class
     |           |   |   |       
     |           |   |   +---controller
+    |           |   |   |       BookingController.class
     |           |   |   |       CinemaController.class
+    |           |   |   |       CinemaControllerFactory.class
+    |           |   |   |       HallController.class
+    |           |   |   |       SessionController.class
     |           |   |   |       
     |           |   |   +---dao
     |           |   |   |       BookingDao.class
@@ -202,7 +231,11 @@ D:.
         |   |   |       Client.java
         |   |   |       
         |   |   +---controller
+        |   |   |       BookingController.java
         |   |   |       CinemaController.java
+        |   |   |       CinemaControllerFactory.java
+        |   |   |       HallController.java
+        |   |   |       SessionController.java
         |   |   |       
         |   |   +---dao
         |   |   |       BookingDao.java

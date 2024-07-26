@@ -1,0 +1,1996 @@
+package com.cinemamanage.client.connection;
+
+import com.google.gson.Gson;
+
+import java.io.*;
+import java.net.Socket;
+
+public class Client {
+    private final String host;
+    private final int port;
+    private final Gson gson = new Gson();
+    private Socket socket;
+    private PrintWriter out;
+    private BufferedReader in;
+
+    public Client(String host, int port) {
+        this.host = host;
+        this.port = port;
+    }
+
+    public void connect() throws IOException {
+        System.out.println("Client connected");
+        socket = new Socket(host, port);
+        out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()), true);
+        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+    }
+
+    public Response sendRequest(Request request) throws IOException {
+        if (out == null || in == null) {
+            throw new IOException("Client is not connected.");
+        }
+        String requestJson = gson.toJson(request);
+        out.println(requestJson);
+        String responseJson = in.readLine();
+        if (responseJson == null) {
+            throw new IOException("Server closed connection unexpectedly.");
+        }
+        return gson.fromJson(responseJson, Response.class);
+    }
+
+    public void disconnect() throws IOException {
+        System.out.println("Client disconnected.");
+        if (in != null) in.close();
+        if (out != null) out.close();
+        if (socket != null) socket.close();
+    }
+
+    public Gson getGson() {
+        return gson;
+    }
+}
+
+package com.cinemamanage.client.connection;
+
+import java.util.Map;
+
+public class Request {
+    private Map<String, String> headers;
+    private Map<String, Object> body;
+
+    public Map<String, String> getHeaders() {
+        return headers;
+    }
+
+    public void setHeaders(Map<String, String> headers) {
+        this.headers = headers;
+    }
+
+    public Map<String, Object> getBody() {
+        return body;
+    }
+
+    public void setBody(Map<String, Object> body) {
+        this.body = body;
+    }
+}
+
+package com.cinemamanage.client.connection;
+
+public class Response {
+    private String status;
+    private String message;
+
+    public Response(String status, String message) {
+        this.status = status;
+        this.message = message;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+}
+
+package com.cinemamanage.client.controllers;
+
+import com.cinemamanage.client.services.CinemaService;
+import com.cinemamanage.client.models.Booking;
+import com.cinemamanage.client.models.Hall;
+import com.cinemamanage.client.models.Seat;
+import com.cinemamanage.client.models.Session;
+import javafx.fxml.FXML;
+import javafx.scene.control.*;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Pane;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
+import javafx.stage.Stage;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+public class AddBookingViewController {
+
+    @FXML
+    private GridPane hallLayoutGrid;
+
+    @FXML
+    private TextField phoneNumberField;
+
+    @FXML
+    private TextField numberOfPeopleField;
+
+    @FXML
+    private TextField distanceField;
+
+    @FXML
+    private ComboBox<String> algorithmComboBox;
+
+    private CinemaService cinemaService;
+    private Session session;
+    private List<Seat> selectedSeats = new ArrayList<>();
+
+    public void setCinemaService(CinemaService cinemaService) {
+        this.cinemaService = cinemaService;
+    }
+
+    public void setSession(Session session) {
+        this.session = session;
+        displayHallLayout();
+    }
+
+    private void displayHallLayout() {
+        hallLayoutGrid.getChildren().clear();
+        Hall hall = cinemaService.getAllHalls().get(String.valueOf(session.getHallNumber()));
+        if (hall != null) {
+            int[][] layout = hall.getLayout();
+            for (int i = 0; i < layout.length; i++) {
+                for (int j = 0; j < layout[i].length; j++) {
+                    Pane cell = createCell(layout[i][j], i, j);
+                    hallLayoutGrid.add(cell, j, i);
+                }
+            }
+        }
+    }
+
+    private Pane createCell(int value, int row, int column) {
+        Pane cell = new Pane();
+        cell.setPrefSize(30, 30);
+        Rectangle rectangle = new Rectangle(30, 30);
+        rectangle.setFill(getColorForValue(value));
+
+        // Highlight already booked seats
+        if (isSeatBooked(row, column)) {
+            rectangle.setFill(Color.RED);
+        }
+
+        // Highlight already chosen seats
+        if (isSeatChosen(row, column)) {
+            rectangle.setFill(Color.GREEN);
+        }
+
+        cell.getChildren().add(rectangle);
+        cell.setOnMouseClicked(event -> onCellClicked(row, column, rectangle, value));
+        return cell;
+    }
+
+    private void onCellClicked(int row, int column, Rectangle rectangle, int value) {
+        if (value == Hall.EMPTY_SPACE) {
+            showAlert("Error", "Cannot book a seat marked as empty space.");
+            return;
+        }
+
+        Seat seat = new Seat(row, column);
+        if (selectedSeats.contains(seat)) {
+            selectedSeats.remove(seat);
+            rectangle.setFill(getColorForValue(Hall.EMPTY)); // Return to original color
+        } else {
+            if (isSeatBooked(row, column)) {
+                showAlert("Error", "Seat is already booked.");
+            } else {
+                selectedSeats.add(seat);
+                rectangle.setFill(Color.GREEN); // Highlight selected seat
+            }
+        }
+    }
+
+    private boolean isSeatBooked(int row, int column) {
+        return session.getSeats().stream().anyMatch(seat -> seat.getRow() == row && seat.getColumn() == column);
+    }
+
+    private boolean isSeatChosen(int row, int column) {
+        return selectedSeats.stream().anyMatch(seat -> seat.getRow() == row && seat.getColumn() == column);
+    }
+
+    private Color getColorForValue(int value) {
+        switch (value) {
+            case Hall.EMPTY:
+                return Color.WHITE;
+            case Hall.OCCUPIED:
+                return Color.RED;
+            case Hall.EMPTY_SPACE:
+                return Color.BLACK;
+            case Hall.VIP:
+                return Color.BLUE;
+            case Hall.ACCESSIBLE:
+                return Color.YELLOW;
+            default:
+                return Color.GRAY;
+        }
+    }
+
+    @FXML
+    protected void onBookButtonClick() {
+        String phoneNumber = phoneNumberField.getText();
+
+        try {
+            if (phoneNumber.isEmpty() || selectedSeats.isEmpty()) {
+                showAlert("Error", "Phone number and at least one seat must be selected.");
+                return;
+            }
+
+            if (!phoneNumber.matches("[0-9]{10}")) {
+                throw new NumberFormatException(); // Создание нового экземпляра исключения
+            }
+
+            for (Seat seat : selectedSeats) {
+                String bookingId = generateNewBookingId();
+                Booking newBooking = new Booking(bookingId, session.getSessionId(), seat, phoneNumber);
+                cinemaService.addBooking(newBooking);
+            }
+            Stage stage = (Stage) hallLayoutGrid.getScene().getWindow();
+            stage.close(); // Закрытие окна после бронирования
+        } catch (IOException e) {
+            showAlert("Error", "Failed to add the booking.");
+            e.printStackTrace();
+        } catch (NumberFormatException e) {
+            showAlert("Error", "Phone number must be 10 digits.");
+        }
+    }
+
+
+    private String generateNewBookingId() {
+        int maxId = cinemaService.getAllBookings().values().stream().mapToInt(booking -> Integer.parseInt(booking.getBookingId())).max().orElse(0);
+        return String.valueOf(maxId + 1);
+    }
+
+    @FXML
+    protected void onGenerateSeatsButtonClick() {
+        String algorithm = algorithmComboBox.getValue();
+        String numberOfPeopleStr = numberOfPeopleField.getText();
+        String distanceStr = distanceField.getText();
+
+        if (algorithm == null || numberOfPeopleStr.isEmpty() || distanceStr.isEmpty()) {
+            showAlert("Error", "All fields must be filled.");
+            return;
+        }
+
+        try {
+            int numberOfPeople = Integer.parseInt(numberOfPeopleStr);
+            int distance = Integer.parseInt(distanceStr);
+
+            List<Seat> generatedSeats = cinemaService.generateSeats(session.getSessionId(), numberOfPeople, distance, algorithm);
+
+            selectedSeats.clear();
+            selectedSeats.addAll(generatedSeats);
+            displayHallLayout(); // Refresh the layout to show the selected seats
+            if (selectedSeats.size() < numberOfPeople) {
+                showAlert("Warning", "The number of requested seats exceeds the hall's capacity! " + (numberOfPeople - selectedSeats.size()) + " seats could not be selected. Please try a different number or add seats manually!");
+            }
+        } catch (NumberFormatException e) {
+            showAlert("Error", "Number of people and distance must be integers.");
+        } catch (IOException e) {
+            showAlert("Error", "Failed to generate seats.");
+            e.printStackTrace();
+        }
+    }
+
+    private void showAlert(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle(title);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+}
+package com.cinemamanage.client.controllers;
+
+import com.cinemamanage.client.services.CinemaService;
+import com.cinemamanage.client.models.Hall;
+import javafx.collections.FXCollections;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Pane;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
+import javafx.stage.Stage;
+
+import java.io.IOException;
+import java.util.Optional;
+
+public class HallsViewController {
+
+    @FXML
+    private ComboBox<String> hallsComboBox;
+
+    @FXML
+    private GridPane hallLayoutGrid;
+
+    @FXML
+    private TextField rowsField;
+
+    @FXML
+    private TextField columnsField;
+
+    @FXML
+    private TextField hallNumberField;
+
+    private CinemaService cinemaService;
+
+    private Hall currentEditingHall;
+
+    private ContextMenu contextMenu;
+
+    @FXML
+    public void initialize() {
+        try {
+            cinemaService = new CinemaService("localhost", 34567);
+            fetchAllHalls();
+
+            hallLayoutGrid.sceneProperty().addListener((observable, oldScene, newScene) -> {
+                if (newScene != null) {
+                    newScene.addEventFilter(MouseEvent.MOUSE_PRESSED, event -> {
+                        if (contextMenu != null && contextMenu.isShowing()) {
+                            contextMenu.hide();
+                        }
+                    });
+                }
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void fetchAllHalls() throws IOException {
+        cinemaService.fetchAllHalls();
+        hallsComboBox.setItems(FXCollections.observableArrayList(cinemaService.getAllHalls().keySet()));
+    }
+
+    @FXML
+    protected void onCreateNewHallButtonClick() {
+        // Check if all fields are filled
+        if (rowsField.getText().isEmpty() || columnsField.getText().isEmpty() || hallNumberField.getText().isEmpty()) {
+            showAlert("Input Error", "All fields must be filled.");
+            return;
+        }
+
+        // Check if the input values are valid integers
+        int rows;
+        int columns;
+        int hallNumber;
+        try {
+            rows = Integer.parseInt(rowsField.getText());
+            columns = Integer.parseInt(columnsField.getText());
+            hallNumber = Integer.parseInt(hallNumberField.getText());
+        } catch (NumberFormatException e) {
+            showAlert("Input Error", "Rows, Columns, and Hall Number must be numbers.");
+            return;
+        }
+
+        // Check if the values are positive
+        if (rows <= 0 || columns <= 0 || hallNumber <= 0) {
+            showAlert("Input Error", "Rows, Columns, and Hall Number must be positive numbers.");
+            return;
+        }
+
+        // Create new hall layout
+        int[][] layout = new int[rows][columns];
+        currentEditingHall = new Hall(hallNumber, layout);
+        displayHallLayout(currentEditingHall);
+    }
+
+    @FXML
+    protected void onSaveNewHallButtonClick() {
+        try {
+            cinemaService.addHall(currentEditingHall);
+            fetchAllHalls();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @FXML
+    protected void onDeleteHallButtonClick() {
+        String selectedHallNumber = hallsComboBox.getSelectionModel().getSelectedItem();
+        if (selectedHallNumber != null) {
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle("Delete Hall");
+            alert.setHeaderText("Are you sure you want to delete hall " + selectedHallNumber + "?");
+            alert.setContentText("This action cannot be undone.");
+
+            ButtonType buttonTypeYes = new ButtonType("Yes");
+            ButtonType buttonTypeCancel = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+
+            alert.getButtonTypes().setAll(buttonTypeYes, buttonTypeCancel);
+
+            Optional<ButtonType> result = alert.showAndWait();
+            if (result.isPresent() && result.get() == buttonTypeYes) {
+                try {
+                    cinemaService.deleteHall(Integer.parseInt(selectedHallNumber));
+                    fetchAllHalls();
+                    hallLayoutGrid.getChildren().clear();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    @FXML
+    protected void onHallSelected() {
+        String selectedHallNumber = hallsComboBox.getSelectionModel().getSelectedItem();
+        if (selectedHallNumber != null) {
+            Hall selectedHall = cinemaService.getAllHalls().get(selectedHallNumber);
+            displayHallLayout(selectedHall);
+        }
+    }
+
+    @FXML
+    protected void onBackButtonClick() throws IOException {
+        Stage stage = (Stage) hallLayoutGrid.getScene().getWindow();
+        Parent root = FXMLLoader.load(getClass().getResource("/com/cinemamanage/client/main-view.fxml"));
+        stage.setScene(new Scene(root));
+    }
+
+    private void displayHallLayout(Hall hall) {
+        hallLayoutGrid.getChildren().clear();
+        int[][] layout = hall.getLayout();
+
+        for (int i = 0; i < layout.length; i++) {
+            for (int j = 0; j < layout[i].length; j++) {
+                Pane cell = createCell(layout[i][j], i, j);
+                hallLayoutGrid.add(cell, j, i);
+            }
+        }
+    }
+
+    private Pane createCell(int value, int row, int column) {
+        Pane cell = new Pane();
+        cell.setPrefSize(30, 30);
+        Rectangle rectangle = new Rectangle(30, 30);
+        rectangle.setFill(getColorForValue(value));
+        cell.getChildren().add(rectangle);
+        cell.setOnMouseClicked(event -> onCellClicked(event, row, column));
+        return cell;
+    }
+
+    private void onCellClicked(MouseEvent event, int row, int column) {
+        if (event.getButton() == MouseButton.SECONDARY && this.currentEditingHall != null) {
+            showContextMenu(event, row, column);
+        }
+    }
+
+    private void showContextMenu(MouseEvent event, int row, int column) {
+        contextMenu = new ContextMenu();
+
+        MenuItem emptyItem = new MenuItem("Empty");
+        emptyItem.setOnAction(e -> updateCell(row, column, Hall.EMPTY));
+
+        MenuItem occupiedItem = new MenuItem("Occupied");
+        occupiedItem.setOnAction(e -> updateCell(row, column, Hall.OCCUPIED));
+
+        MenuItem emptySpaceItem = new MenuItem("Empty Space");
+        emptySpaceItem.setOnAction(e -> updateCell(row, column, Hall.EMPTY_SPACE));
+
+        MenuItem vipItem = new MenuItem("VIP");
+        vipItem.setOnAction(e -> updateCell(row, column, Hall.VIP));
+
+        MenuItem accessibleItem = new MenuItem("Accessible");
+        accessibleItem.setOnAction(e -> updateCell(row, column, Hall.ACCESSIBLE));
+
+        contextMenu.getItems().addAll(emptyItem, occupiedItem, emptySpaceItem, vipItem, accessibleItem);
+        contextMenu.show(hallLayoutGrid, event.getScreenX(), event.getScreenY());
+    }
+
+
+
+    private void updateCell(int row, int column, int value) {
+        currentEditingHall.getLayout()[row][column] = value;
+        displayHallLayout(currentEditingHall);
+    }
+
+    private Color getColorForValue(int value) {
+        switch (value) {
+            case Hall.EMPTY:
+                return Color.WHITE;
+            case Hall.OCCUPIED:
+                return Color.RED;
+            case Hall.EMPTY_SPACE:
+                return Color.BLACK;
+            case Hall.VIP:
+                return Color.BLUE;
+            case Hall.ACCESSIBLE:
+                return Color.YELLOW;
+            default:
+                return Color.GRAY;
+        }
+    }
+
+    public void onClose() {
+        try {
+            cinemaService.onClose();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void showAlert(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+}
+package com.cinemamanage.client.controllers;
+
+import com.cinemamanage.client.services.CinemaService;
+import com.cinemamanage.client.models.Booking;
+import com.cinemamanage.client.models.Session;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.input.MouseButton;
+import javafx.stage.Stage;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.stream.Collectors;
+
+public class BookingsViewController {
+
+    @FXML
+    private ComboBox<String> movieNameComboBox;
+
+    @FXML
+    private ComboBox<String> timeComboBox;
+
+    @FXML
+    private ComboBox<String> hallNumberComboBox;
+
+    @FXML
+    private TableView<Session> sessionsTableView;
+
+    @FXML
+    private TableColumn<Session, String> sessionIdColumn;
+
+    @FXML
+    private TableColumn<Session, String> movieNameColumn;
+
+    @FXML
+    private TableColumn<Session, String> timeColumn;
+
+    @FXML
+    private TableColumn<Session, Integer> hallNumberColumn;
+
+    @FXML
+    private TableView<Booking> bookingsTableView;
+
+    @FXML
+    private TableColumn<Booking, String> bookingIdColumn;
+
+    @FXML
+    private TableColumn<Booking, String> phoneNumberColumn;
+
+    @FXML
+    private TableColumn<Booking, String> seatColumn;
+
+    @FXML
+    private TextField phoneFilterField;
+
+    private CinemaService cinemaService;
+    private ObservableList<Session> allSessions;
+    private ObservableList<Booking> allBookings;
+    private Session selectedSession;
+
+    @FXML
+    public void initialize() {
+        try {
+            cinemaService = new CinemaService("localhost", 34567);
+            initializeTableColumns();
+            fetchAllSessions();
+            fetchAllBookings();
+            sessionsTableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+            bookingsTableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void initializeTableColumns() {
+        sessionIdColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getSessionId()));
+        movieNameColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getMovieName()));
+        timeColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getTime()));
+        hallNumberColumn.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getHallNumber()).asObject());
+
+        bookingIdColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getBookingId()));
+        phoneNumberColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getPhoneNumber()));
+        seatColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getSeat().toString()));
+
+        sessionsTableView.setRowFactory(tv -> {
+            TableRow<Session> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                if (!row.isEmpty() && event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 1) {
+                    Session rowData = row.getItem();
+                    selectedSession = rowData;
+                    displayBookingsForSession(rowData);
+                }
+            });
+            return row;
+        });
+    }
+
+    private void fetchAllSessions() throws IOException {
+        cinemaService.fetchAllSessions();
+        allSessions = FXCollections.observableArrayList(cinemaService.getAllSessions().values());
+        sessionsTableView.setItems(allSessions);
+
+        movieNameComboBox.setItems(FXCollections.observableArrayList(
+                allSessions.stream().map(Session::getMovieName).distinct().collect(Collectors.toList())
+        ));
+        timeComboBox.setItems(FXCollections.observableArrayList(
+                allSessions.stream().map(Session::getTime).distinct().collect(Collectors.toList())
+        ));
+        hallNumberComboBox.setItems(FXCollections.observableArrayList(
+                allSessions.stream().map(session -> String.valueOf(session.getHallNumber())).distinct().collect(Collectors.toList())
+        ));
+    }
+
+    private void fetchAllBookings() throws IOException {
+        cinemaService.fetchAllBookings();
+        allBookings = FXCollections.observableArrayList(cinemaService.getAllBookings().values());
+    }
+
+    private void displayBookingsForSession(Session session) {
+        List<Booking> sessionBookings = allBookings.stream()
+                .filter(booking -> booking.getSessionId().equals(session.getSessionId()))
+                .collect(Collectors.toList());
+        bookingsTableView.setItems(FXCollections.observableArrayList(sessionBookings));
+    }
+
+    @FXML
+    protected void onFilterSessions() {
+        String movieName = movieNameComboBox.getValue();
+        String time = timeComboBox.getValue();
+        String hallNumber = hallNumberComboBox.getValue();
+
+        List<Session> filteredSessions = allSessions.stream().filter(session -> {
+            boolean matches = true;
+            if (movieName != null && !movieName.isEmpty()) {
+                matches = session.getMovieName().equals(movieName);
+            }
+            if (time != null && !time.isEmpty()) {
+                matches = matches && session.getTime().equals(time);
+            }
+            if (hallNumber != null && !hallNumber.isEmpty()) {
+                matches = matches && String.valueOf(session.getHallNumber()).equals(hallNumber);
+            }
+            return matches;
+        }).collect(Collectors.toList());
+
+        sessionsTableView.setItems(FXCollections.observableArrayList(filteredSessions));
+    }
+
+    @FXML
+    protected void onFilterBookings() {
+        String phoneFilter = phoneFilterField.getText().toLowerCase();
+
+        List<Booking> filteredBookings = allBookings.stream().filter(booking ->
+                booking.getPhoneNumber().toLowerCase().contains(phoneFilter)
+        ).collect(Collectors.toList());
+
+        bookingsTableView.setItems(FXCollections.observableArrayList(filteredBookings));
+    }
+
+    @FXML
+    protected void onAddBookingButtonClick() {
+        if (selectedSession == null) {
+            showAlert("Error", "Please select a session before adding a booking.");
+            return;
+        }
+
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/cinemamanage/client/add-booking-view.fxml"));
+            Parent root = loader.load();
+
+            AddBookingViewController controller = loader.getController();
+            controller.setCinemaService(cinemaService);
+            controller.setSession(selectedSession);
+
+            Stage stage = new Stage();
+            stage.setScene(new Scene(root));
+            stage.showAndWait();
+
+            fetchAllBookings(); // Refresh bookings after adding new one
+            fetchAllSessions();
+            initializeTableColumns();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    @FXML
+    protected void onDeleteBookingButtonClick() {
+        Booking selectedBooking = bookingsTableView.getSelectionModel().getSelectedItem();
+        if (selectedBooking != null) {
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle("Delete Booking");
+            alert.setContentText("Are you sure you want to delete this booking?");
+            alert.showAndWait().ifPresent(response -> {
+                if (response == ButtonType.OK) {
+                    try {
+                        cinemaService.deleteBooking(selectedBooking.getBookingId());
+                        fetchAllBookings();
+                        allBookings.remove(selectedBooking);
+                        bookingsTableView.setItems(allBookings);
+                    } catch (IOException e) {
+                        showAlert("Error", "Failed to delete the booking.");
+                        e.printStackTrace();
+                    }
+                }
+            });
+        }
+    }
+
+    private void showAlert(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle(title);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    @FXML
+    protected void onBackButtonClick() throws IOException {
+        Stage stage = (Stage) sessionsTableView.getScene().getWindow();
+        Parent root = FXMLLoader.load(getClass().getResource("/com/cinemamanage/client/main-view.fxml"));
+        stage.setScene(new Scene(root));
+    }
+
+    public void onClose() {
+        try {
+            cinemaService.onClose();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+package com.cinemamanage.client.controllers;
+
+import com.cinemamanage.client.MainApp;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
+
+import java.io.IOException;
+
+public class MainViewController {
+
+    @FXML
+    public void initialize() {
+    }
+
+    @FXML
+    protected void onHallsButtonClick() throws IOException {
+        Stage stage = (Stage) MainApp.getPrimaryStage().getScene().getWindow();
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/cinemamanage/client/halls-view.fxml"));
+        Parent root = loader.load();
+        stage.setScene(new Scene(root));
+        stage.centerOnScreen();
+    }
+
+    @FXML
+    protected void onSessionsButtonClick() throws IOException {
+        Stage stage = (Stage) MainApp.getPrimaryStage().getScene().getWindow();
+        Parent root = FXMLLoader.load(getClass().getResource("/com/cinemamanage/client/sessions-view.fxml"));
+        stage.setScene(new Scene(root));
+        stage.centerOnScreen();
+    }
+
+    @FXML
+    protected void onBookingsButtonClick() throws IOException {
+        Stage stage = (Stage) MainApp.getPrimaryStage().getScene().getWindow();
+        Parent root = FXMLLoader.load(getClass().getResource("/com/cinemamanage/client/bookings-view.fxml"));
+        stage.setScene(new Scene(root));
+        stage.centerOnScreen();
+    }
+
+    public void onClose() {
+    }
+}
+package com.cinemamanage.client.controllers;
+
+import com.cinemamanage.client.services.CinemaService;
+import com.cinemamanage.client.models.Hall;
+import com.cinemamanage.client.models.Seat;
+import com.cinemamanage.client.models.Session;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.input.ContextMenuEvent;
+import javafx.scene.input.MouseButton;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Pane;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
+import javafx.stage.Stage;
+
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.stream.Collectors;
+
+public class SessionsViewController {
+
+    @FXML
+    private TextField movieNameField;
+
+    @FXML
+    private TextField timeField;
+
+    @FXML
+    private TextField newDateField;
+
+    @FXML
+    private TextField newTimeField;
+
+
+    @FXML
+    private TextField hallNumberField;
+
+    @FXML
+    private TextField newMovieNameField;
+
+    @FXML
+    private TextField newDurationField;
+
+    @FXML
+    private ComboBox<String> newHallComboBox;
+
+    @FXML
+    private Button addNewSessionButton;
+
+    @FXML
+    private TableView<Session> sessionsTableView;
+
+    @FXML
+    private TableColumn<Session, String> sessionIdColumn;
+
+    @FXML
+    private TableColumn<Session, String> movieNameColumn;
+
+    @FXML
+    private TableColumn<Session, String> timeColumn;
+
+    @FXML
+    private TableColumn<Session, Integer> durationColumn;
+
+    @FXML
+    private TableColumn<Session, Integer> hallNumberColumn;
+
+    @FXML
+    private GridPane hallLayoutGrid;
+
+    private CinemaService cinemaService;
+    private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+    private ObservableList<Session> allSessions;
+
+    private Session selectedSession;
+
+    @FXML
+    public void initialize() {
+        try {
+            cinemaService = new CinemaService("localhost", 34567);
+            initializeTableColumns();
+            fetchAllSessions();
+            fetchAllHalls();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void initializeTableColumns() {
+        sessionIdColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getSessionId()));
+        movieNameColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getMovieName()));
+        timeColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getTime()));
+        durationColumn.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getDuration()).asObject());
+        hallNumberColumn.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getHallNumber()).asObject());
+
+        sessionsTableView.setRowFactory(tv -> {
+            TableRow<Session> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                if (!row.isEmpty() && event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 1) {
+                    Session rowData = row.getItem();
+                    displaySession(rowData);
+                }
+            });
+            row.setOnContextMenuRequested(event -> showContextMenu(event, row));
+            return row;
+        });
+    }
+
+    private void fetchAllSessions() throws IOException {
+        cinemaService.fetchAllSessions();
+        allSessions = FXCollections.observableArrayList(cinemaService.getAllSessions().values());
+        sessionsTableView.setItems(allSessions);
+    }
+
+    private void fetchAllHalls() throws IOException {
+        cinemaService.fetchAllHalls();
+        newHallComboBox.setItems(FXCollections.observableArrayList(cinemaService.getAllHalls().keySet()));
+    }
+
+    private void displaySession(Session session) {
+        hallLayoutGrid.getChildren().clear();
+        Hall hall = cinemaService.getAllHalls().get(String.valueOf(session.getHallNumber()));
+        if (hall != null) {
+            int[][] layout = hall.getLayout();
+            for (int i = 0; i < layout.length; i++) {
+                for (int j = 0; j < layout[i].length; j++) {
+                    Pane cell = createCell(layout[i][j], i, j, session.getSeats());
+                    hallLayoutGrid.add(cell, j, i);
+                }
+            }
+        }
+    }
+
+    private Pane createCell(int value, int row, int column, List<Seat> bookedSeats) {
+        Pane cell = new Pane();
+        cell.setPrefSize(30, 30);
+        Rectangle rectangle = new Rectangle(30, 30);
+        if (isSeatBooked(bookedSeats, row, column)) {
+            rectangle.setFill(Color.RED);
+        } else {
+            rectangle.setFill(getColorForValue(value));
+        }
+        cell.getChildren().add(rectangle);
+        return cell;
+    }
+
+    private boolean isSeatBooked(List<Seat> bookedSeats, int row, int column) {
+        return bookedSeats.stream().anyMatch(seat -> seat.getRow() == row && seat.getColumn() == column);
+    }
+
+    private Color getColorForValue(int value) {
+        switch (value) {
+            case Hall.EMPTY:
+                return Color.WHITE;
+            case Hall.OCCUPIED:
+                return Color.RED;
+            case Hall.EMPTY_SPACE:
+                return Color.BLACK;
+            case Hall.VIP:
+                return Color.BLUE;
+            case Hall.ACCESSIBLE:
+                return Color.YELLOW;
+            default:
+                return Color.GRAY;
+        }
+    }
+
+    @FXML
+    protected void onFilterButtonClick() {
+        String movieName = movieNameField.getText().toLowerCase();
+        String time = timeField.getText();
+        String hallNumber = hallNumberField.getText();
+
+        List<Session> filteredSessions = allSessions.stream().filter(session -> {
+            boolean matches = true;
+            if (!movieName.isEmpty()) {
+                matches = session.getMovieName().toLowerCase().contains(movieName);
+            }
+            if (!time.isEmpty()) {
+                matches = matches && session.getTime().contains(time);
+            }
+            if (!hallNumber.isEmpty()) {
+                matches = matches && Integer.toString(session.getHallNumber()).equals(hallNumber);
+            }
+            return matches;
+        }).collect(Collectors.toList());
+
+        sessionsTableView.setItems(FXCollections.observableArrayList(filteredSessions));
+    }
+
+    @FXML
+    protected void onAddNewSessionButtonClick() {
+        String movieName = newMovieNameField.getText();
+        String date = newDateField.getText();
+        String time = newTimeField.getText();
+        String durationStr = newDurationField.getText();
+        String hallNumberStr = newHallComboBox.getSelectionModel().getSelectedItem();
+
+        if (movieName.isEmpty() || date.isEmpty() || time.isEmpty() || durationStr.isEmpty() || hallNumberStr == null) {
+            showAlert("Error", "All fields must be filled.");
+            return;
+        }
+
+        LocalDateTime startTime;
+        try {
+            startTime = LocalDateTime.parse(date + " " + time, dateTimeFormatter);
+        } catch (Exception e) {
+            showAlert("Error", "Invalid date or time format.");
+            return;
+        }
+
+        int duration = Integer.parseInt(durationStr);
+        int hallNumber = Integer.parseInt(hallNumberStr);
+
+        if (isSessionOverlapping(hallNumber, startTime, duration)) {
+            showAlert("Error", "The session time overlaps with an existing session in the same hall.");
+            return;
+        }
+
+        String sessionId = (selectedSession == null) ? generateNewSessionId() : selectedSession.getSessionId();
+        Session newSession = new Session(sessionId, movieName, startTime.format(dateTimeFormatter), duration, hallNumber);
+        try {
+            if (selectedSession == null) {
+                cinemaService.addSession(newSession);
+                allSessions.add(newSession);
+            } else {
+                cinemaService.addSession(newSession);
+                int index = allSessions.indexOf(selectedSession);
+                allSessions.set(index, newSession);
+                selectedSession = null;
+                addNewSessionButton.setText("Add New Session");
+            }
+            sessionsTableView.setItems(allSessions);
+            clearSessionFields();
+        } catch (IOException e) {
+            showAlert("Error", "Failed to add the new session.");
+            e.printStackTrace();
+        }
+    }
+
+    private boolean isSessionOverlapping(int hallNumber, LocalDateTime startTime, int duration) {
+        LocalDateTime endTime = startTime.plusMinutes(duration);
+        return allSessions.stream().anyMatch(session -> {
+            if (session.getHallNumber() == hallNumber) {
+                LocalDateTime sessionStart = LocalDateTime.parse(session.getTime(), dateTimeFormatter);
+                LocalDateTime sessionEnd = sessionStart.plusMinutes(session.getDuration());
+                return startTime.isBefore(sessionEnd) && endTime.isAfter(sessionStart);
+            }
+            return false;
+        });
+    }
+
+    private String generateNewSessionId() {
+        int maxId = allSessions.stream().mapToInt(session -> Integer.parseInt(session.getSessionId())).max().orElse(0);
+        return String.valueOf(maxId + 1);
+    }
+
+    private void showAlert(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle(title);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    private void showContextMenu(ContextMenuEvent event, TableRow<Session> row) {
+        if (!row.isEmpty()) {
+            ContextMenu contextMenu = new ContextMenu();
+
+            MenuItem deleteItem = new MenuItem("Delete");
+            deleteItem.setOnAction(e -> onDeleteSession(row.getItem()));
+
+            contextMenu.getItems().addAll(/*editItem,*/ deleteItem);
+            contextMenu.show(row, event.getScreenX(), event.getScreenY());
+        }
+    }
+
+    private void onDeleteSession(Session session) {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Delete Session");
+        alert.setContentText("Are you sure you want to delete this session?");
+        alert.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                try {
+                    cinemaService.deleteSession(session.getSessionId());
+                    allSessions.remove(session);
+                    sessionsTableView.setItems(allSessions);
+                } catch (IOException e) {
+                    showAlert("Error", "Failed to delete the session.");
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
+    @FXML
+    protected void onBackButtonClick() throws IOException {
+        Stage stage = (Stage) sessionsTableView.getScene().getWindow();
+        Parent root = FXMLLoader.load(getClass().getResource("/com/cinemamanage/client/main-view.fxml"));
+        stage.setScene(new Scene(root));
+    }
+
+    private void clearSessionFields() {
+        newMovieNameField.clear();
+        newDateField.clear();
+        newTimeField.clear();
+        newDurationField.clear();
+        newHallComboBox.getSelectionModel().clearSelection();
+    }
+
+
+    public void onClose() {
+        try {
+            cinemaService.onClose();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+package com.cinemamanage.client.models;
+
+import java.io.Serializable;
+
+public class Booking implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    private String bookingId;
+    private String sessionId;
+    private Seat seat;
+    private String phoneNumber;
+
+    // Constructors, getters, setters
+    public Booking(String bookingId, String sessionId, Seat seat, String phoneNumber) {
+        this.bookingId = bookingId;
+        this.sessionId = sessionId;
+        this.seat = seat;
+        this.phoneNumber = phoneNumber;
+    }
+
+    public String getBookingId() {
+        return bookingId;
+    }
+
+    public void setBookingId(String bookingId) {
+        this.bookingId = bookingId;
+    }
+
+    public String getSessionId() {
+        return sessionId;
+    }
+
+    public void setSessionId(String sessionId) {
+        this.sessionId = sessionId;
+    }
+
+    public Seat getSeat() {
+        return seat;
+    }
+
+    public void setSeat(Seat seat) {
+        this.seat = seat;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
+    @Override
+    public String toString() {
+        return "Booking{" +
+                "bookingId='" + bookingId + '\'' +
+                ", sessionId='" + sessionId + '\'' +
+                ", seat=" + seat +
+                ", phoneNumber='" + phoneNumber + '\'' +
+                '}';
+    }
+}
+
+
+package com.cinemamanage.client.models;
+
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.Objects;
+
+public class Seat implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private int row;
+    private int column;
+    private boolean isBooked;
+
+    // Constructors, getters, setters
+    public Seat(int row, int column) {
+        this.row = row;
+        this.column = column;
+        this.isBooked = false;
+    }
+
+    public int getRow() {
+        return row;
+    }
+
+    public void setRow(int row) {
+        this.row = row;
+    }
+
+    public int getColumn() {
+        return column;
+    }
+
+    public void setColumn(int column) {
+        this.column = column;
+    }
+
+    public boolean isBooked() {
+        return isBooked;
+    }
+
+    public void setBooked(boolean booked) {
+        isBooked = booked;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Seat seat = (Seat) o;
+        return row == seat.row && column == seat.column;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(row, column);
+    }
+
+    @Override
+    public String toString() {
+        return "row:" + row + 1 + ", column:" + column + 1;
+    }
+}
+package com.cinemamanage.client.models;
+
+import java.io.Serializable;
+import java.util.Arrays;
+
+public class Hall implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    private int hallNumber;
+    private int[][] layout;
+
+    // Constants
+    public static final int EMPTY = 0;
+    public static final int OCCUPIED = 1;
+    public static final int EMPTY_SPACE = 3;
+    public static final int VIP = 4;
+    public static final int ACCESSIBLE = 5;
+
+    // Constructors, getters, setters
+    public Hall(int hallNumber, int rows, int columns) {
+        this.hallNumber = hallNumber;
+        this.layout = new int[rows][columns];
+        for (int[] row : layout) {
+            Arrays.fill(row, EMPTY);
+        }
+    }
+
+    public Hall(int hallNumber, int[][] layout) {
+        this.hallNumber = hallNumber;
+        this.layout = new int[layout.length][];
+        for (int i = 0; i < layout.length; i++) {
+            this.layout[i] = Arrays.copyOf(layout[i], layout[i].length);
+        }
+    }
+
+    public int getHallNumber() {
+        return hallNumber;
+    }
+
+    public void setHallNumber(int hallNumber) {
+        this.hallNumber = hallNumber;
+    }
+
+    public int[][] getLayout() {
+        return layout;
+    }
+
+    public void setLayout(int[][] layout) {
+        this.layout = layout;
+    }
+
+    // Методы для пометки мест
+    public void markAsVIP(int row, int column) {
+        if (isValidPosition(row, column)) {
+            layout[row][column] = VIP;
+        }
+    }
+
+    public void markAsAccessible(int row, int column) {
+        if (isValidPosition(row, column)) {
+            layout[row][column] = ACCESSIBLE;
+        }
+    }
+
+    public void markAsEmptySpace(int row, int column) {
+        if (isValidPosition(row, column)) {
+            layout[row][column] = EMPTY_SPACE;
+        }
+    }
+
+    private boolean isValidPosition(int row, int column) {
+        return row >= 0 && row < layout.length && column >= 0 && column < layout[0].length;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        for (int[] row : layout) {
+            sb.append(Arrays.toString(row)).append("\n");
+        }
+
+        return "Hall{" +
+                "hallNumber=" + hallNumber +
+                ", layout=" + '\n' + sb +
+                '}';
+    }
+}
+
+
+package com.cinemamanage.client.models;
+
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+
+public class Session implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private String sessionId;
+    private String movieName;
+    private String time;
+    private int duration; // Duration in minutes
+    private List<Seat> seats;
+    private int hallNumber;
+
+    public Session(String sessionId, String movieName, String time, int duration, List<Seat> seats, int hallNumber) {
+        this.sessionId = sessionId;
+        this.movieName = movieName;
+        this.time = time;
+        this.duration = duration;
+        this.seats = seats != null ? new ArrayList<>(seats) : new ArrayList<>();
+        this.hallNumber = hallNumber;
+    }
+
+    public Session(String sessionId, String movieName, String time, int duration, int hallNumber) {
+        this(sessionId, movieName, time, duration, new ArrayList<>(), hallNumber);
+    }
+
+    // Getters and setters...
+
+    public String getSessionId() {
+        return sessionId;
+    }
+
+    public void setSessionId(String sessionId) {
+        this.sessionId = sessionId;
+    }
+
+    public String getMovieName() {
+        return movieName;
+    }
+
+    public void setMovieName(String movieName) {
+        this.movieName = movieName;
+    }
+
+    public String getTime() {
+        return time;
+    }
+
+    public void setTime(String time) {
+        this.time = time;
+    }
+
+    public int getDuration() {
+        return duration;
+    }
+
+    public void setDuration(int duration) {
+        this.duration = duration;
+    }
+
+    public List<Seat> getSeats() {
+        return new ArrayList<>(seats);
+    }
+
+    public void setSeats(List<Seat> seats) {
+        this.seats = new ArrayList<>(seats);
+    }
+
+    public int getHallNumber() {
+        return hallNumber;
+    }
+
+    public void setHallNumber(int hallNumber) {
+        this.hallNumber = hallNumber;
+    }
+
+    // Method to add a seat
+    public void addSeat(Seat seat) {
+        if (!seats.contains(seat)) {
+            seats.add(seat);
+        }
+    }
+
+    // Method to remove a seat
+    public void removeSeat(Seat seat) {
+        seats.remove(seat);
+    }
+
+    @Override
+    public String toString() {
+        return "Session{" +
+                "sessionId='" + sessionId + '\'' +
+                ", movieName='" + movieName + '\'' +
+                ", time='" + time + '\'' +
+                ", duration=" + duration +
+                ", seats=" + seats +
+                ", hallNumber=" + hallNumber +
+                '}';
+    }
+}
+
+package com.cinemamanage.client.services;
+
+import com.cinemamanage.client.connection.Client;
+import com.cinemamanage.client.connection.Request;
+import com.cinemamanage.client.connection.Response;
+import com.cinemamanage.client.models.Booking;
+import com.cinemamanage.client.models.Hall;
+import com.cinemamanage.client.models.Seat;
+import com.cinemamanage.client.models.Session;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
+
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class CinemaService {
+    private Client client;
+    private Map<String, Booking> bookings;
+    private Map<String, Session> sessions;
+    private Map<String, Hall> halls;
+    private final Gson gson;
+
+    public CinemaService(String host, int port) throws IOException {
+        this.client = new Client(host, port);
+        this.gson = new GsonBuilder().create();
+        this.bookings = new HashMap<>();
+        this.sessions = new HashMap<>();
+        this.halls = new HashMap<>();
+        fetchAllData();
+    }
+
+    public void fetchAllData() throws IOException {
+        fetchAllHalls();
+        fetchAllSessions();
+        fetchAllBookings();
+    }
+
+    public void fetchAllHalls() throws IOException {
+        client.connect();
+        Request request = new Request();
+        Map<String, String> headers = new HashMap<>();
+        headers.put("action", "hall/getAll");
+        request.setHeaders(headers);
+
+        Response response = client.sendRequest(request);
+
+        if ("success".equals(response.getStatus())) {
+            Type hallMapType = new TypeToken<Map<String, Hall>>() {}.getType();
+            halls = gson.fromJson(response.getMessage(), hallMapType);
+        } else {
+            throw new IOException("Error fetching halls: " + response.getMessage());
+        }
+        client.disconnect();
+    }
+
+    public void fetchAllSessions() throws IOException {
+        client.connect();
+        Request request = new Request();
+        Map<String, String> headers = new HashMap<>();
+        headers.put("action", "session/getAll");
+        request.setHeaders(headers);
+
+        Response response = client.sendRequest(request);
+
+        if ("success".equals(response.getStatus())) {
+            Type sessionMapType = new TypeToken<Map<String, Session>>() {}.getType();
+            sessions = gson.fromJson(response.getMessage(), sessionMapType);
+        } else {
+            throw new IOException("Error fetching sessions: " + response.getMessage());
+        }
+        client.disconnect();
+    }
+
+    public void fetchAllBookings() throws IOException {
+        client.connect();
+        Request request = new Request();
+        Map<String, String> headers = new HashMap<>();
+        headers.put("action", "booking/getAll");
+        request.setHeaders(headers);
+
+        Response response = client.sendRequest(request);
+        if ("success".equals(response.getStatus())) {
+            Type bookingMapType = new TypeToken<Map<String, Booking>>() {}.getType();
+            bookings = gson.fromJson(response.getMessage(), bookingMapType);
+        } else {
+            throw new IOException("Error fetching bookings: " + response.getMessage());
+        }
+        client.disconnect();
+    }
+
+    public Map<String, Hall> getAllHalls() {
+        return halls;
+    }
+
+    public Map<String, Session> getAllSessions() {
+        return sessions;
+    }
+
+    public Map<String, Booking> getAllBookings() {
+        return bookings;
+    }
+
+    public void addHall(Hall hall) throws IOException {
+        client.connect();
+        Request request = new Request();
+        Map<String, String> headers = new HashMap<>();
+        headers.put("action", "hall/add");
+        request.setHeaders(headers);
+        Map<String, Object> body = new HashMap<>();
+        body.put("hall", hall);
+        request.setBody(body);
+
+        Response response = client.sendRequest(request);
+        if ("success".equals(response.getStatus())) {
+            halls.put(String.valueOf(hall.getHallNumber()), hall);
+        } else {
+            throw new IOException("Error adding hall: " + response.getMessage());
+        }
+        client.disconnect();
+    }
+
+    public void deleteHall(int hallNumber) throws IOException {
+        client.connect();
+        Request request = new Request();
+        Map<String, String> headers = new HashMap<>();
+        headers.put("action", "hall/delete");
+        request.setHeaders(headers);
+        Map<String, Object> body = new HashMap<>();
+        body.put("hallNumber", hallNumber);
+        request.setBody(body);
+
+        Response response = client.sendRequest(request);
+        if ("success".equals(response.getStatus())) {
+            halls.remove(String.valueOf(hallNumber));
+        } else {
+            throw new IOException("Error deleting hall: " + response.getMessage());
+        }
+        client.disconnect();
+    }
+
+    public void addSession(Session session) throws IOException {
+        client.connect();
+        Request request = new Request();
+        Map<String, String> headers = new HashMap<>();
+        headers.put("action", "session/add");
+        request.setHeaders(headers);
+        Map<String, Object> body = new HashMap<>();
+        body.put("session", session);
+        request.setBody(body);
+
+        Response response = client.sendRequest(request);
+        if ("success".equals(response.getStatus())) {
+            sessions.put(session.getSessionId(), session);
+        } else {
+            throw new IOException("Error adding session: " + response.getMessage());
+        }
+        client.disconnect();
+    }
+
+    public void deleteSession(String sessionId) throws IOException {
+        client.connect();
+        Request request = new Request();
+        Map<String, String> headers = new HashMap<>();
+        headers.put("action", "session/delete");
+        request.setHeaders(headers);
+        Map<String, Object> body = new HashMap<>();
+        body.put("sessionId", sessionId);
+        request.setBody(body);
+
+        Response response = client.sendRequest(request);
+        if ("success".equals(response.getStatus())) {
+            sessions.remove(sessionId);
+        } else {
+            throw new IOException("Error deleting session: " + response.getMessage());
+        }
+        client.disconnect();
+    }
+
+    public void addBooking(Booking booking) throws IOException {
+        client.connect();
+        Request request = new Request();
+        Map<String, String> headers = new HashMap<>();
+        headers.put("action", "booking/add");
+        request.setHeaders(headers);
+        Map<String, Object> body = new HashMap<>();
+        body.put("booking", booking);
+        request.setBody(body);
+
+        Response response = client.sendRequest(request);
+        if ("success".equals(response.getStatus())) {
+            bookings.put(booking.getBookingId(), booking);
+        } else {
+            throw new IOException("Error adding booking: " + response.getMessage());
+        }
+        client.disconnect();
+    }
+
+    public void deleteBooking(String bookingId) throws IOException {
+        client.connect();
+        Request request = new Request();
+        Map<String, String> headers = new HashMap<>();
+        headers.put("action", "booking/delete");
+        request.setHeaders(headers);
+        Map<String, Object> body = new HashMap<>();
+        body.put("bookingId", bookingId);
+        request.setBody(body);
+
+        Response response = client.sendRequest(request);
+        if ("success".equals(response.getStatus())) {
+            bookings.remove(bookingId);
+        } else {
+            throw new IOException("Error deleting booking: " + response.getMessage());
+        }
+        client.disconnect();
+    }
+
+    public List<Seat> generateSeats(String sessionId, int numberOfPeople, int distance, String algorithm) throws IOException {
+        client.connect();
+        Request request = new Request();
+        Map<String, String> headers = new HashMap<>();
+        headers.put("action", "seat/generate");
+        request.setHeaders(headers);
+        Map<String, Object> body = new HashMap<>();
+        body.put("sessionId", sessionId);
+        body.put("numberOfPeople", numberOfPeople);
+        body.put("distance", distance);
+        body.put("algorithm", algorithm);
+        request.setBody(body);
+
+        Response response = client.sendRequest(request);
+        if ("success".equals(response.getStatus())) {
+            Type seatListType = new TypeToken<List<Seat>>() {}.getType();
+            return gson.fromJson(response.getMessage(), seatListType);
+        } else {
+            throw new IOException("Error generating seats: " + response.getMessage());
+        }
+    }
+
+    public void onClose() throws IOException {
+        if (client != null) {
+            client.disconnect();
+        }
+    }
+}
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.VBox?>
+
+<?import javafx.collections.FXCollections?>
+<?import java.lang.String?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.shape.Rectangle?>
+<VBox xmlns:fx="http://javafx.com/fxml" fx:controller="com.cinemamanage.client.controllers.AddBookingViewController"
+      spacing="10">
+    <padding>
+        <Insets top="10" right="10" bottom="10" left="10"/>
+    </padding>
+    <Label text="Phone Number:"/>
+    <TextField fx:id="phoneNumberField"/>
+    <HBox spacing="10">
+        <GridPane fx:id="hallLayoutGrid" hgap="5" vgap="5">
+            <padding>
+                <Insets top="10" right="10" bottom="10" left="10"/>
+            </padding>
+        </GridPane>
+        <VBox spacing="10">
+            <Label text="Legend:">
+                <padding>
+                    <Insets top="10.0" />
+                </padding></Label>
+            <HBox spacing="5">
+                <Rectangle fill="WHITE" height="20" width="20" />
+                <Label text="Empty" />
+            </HBox>
+            <HBox spacing="5">
+                <Rectangle fill="RED" height="20" width="20" />
+                <Label text="Occupied" />
+            </HBox>
+            <HBox spacing="5">
+                <Rectangle fill="BLACK" height="20" width="20" />
+                <Label text="Empty Space" />
+            </HBox>
+            <HBox spacing="5">
+                <Rectangle fill="BLUE" height="20" width="20" />
+                <Label text="VIP" />
+            </HBox>
+            <HBox spacing="5">
+                <Rectangle fill="YELLOW" height="20" width="20" />
+                <Label text="Accessible" />
+            </HBox>
+        </VBox>
+    </HBox>
+
+    <Label text="Number of People:"/>
+    <TextField fx:id="numberOfPeopleField"/>
+    <Label text="Distance:"/>
+    <TextField fx:id="distanceField"/>
+    <Label text="Select Algorithm:"/>
+    <ComboBox fx:id="algorithmComboBox">
+        <items>
+            <FXCollections fx:factory="observableArrayList">
+                <String fx:value="Simple"/>
+                <String fx:value="BFS"/>
+            </FXCollections>
+        </items>
+    </ComboBox>
+    <Button text="Generate Seats" onAction="#onGenerateSeatsButtonClick"/>
+    <Button fx:id="bookButton" text="Book" onAction="#onBookButtonClick"/>
+</VBox>
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane prefHeight="527.0" prefWidth="907.0" stylesheets="@../css/styles.css" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.cinemamanage.client.controllers.BookingsViewController">
+    <top>
+        <VBox spacing="10">
+            <HBox spacing="10">
+                <Label text="Filter Sessions: " />
+                <ComboBox fx:id="movieNameComboBox" promptText="Movie Name" />
+                <ComboBox fx:id="timeComboBox" promptText="Time" />
+                <ComboBox fx:id="hallNumberComboBox" promptText="Hall Number" />
+                <Button onAction="#onFilterSessions" text="Filter" />
+            </HBox>
+            <HBox spacing="10">
+                <Label text="Filter Bookings: " />
+                <TextField fx:id="phoneFilterField" promptText="Phone Number" />
+                <Button onAction="#onFilterBookings" text="Filter" />
+            </HBox>
+        </VBox>
+    </top>
+    <center>
+        <HBox spacing="10" HBox.hgrow="ALWAYS">
+            <VBox HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
+                <Label text="Sessions" />
+                <TableView fx:id="sessionsTableView" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="sessionIdColumn" text="Session ID" />
+                        <TableColumn fx:id="movieNameColumn" text="Movie Name" />
+                        <TableColumn fx:id="timeColumn" text="Time" />
+                        <TableColumn fx:id="hallNumberColumn" text="Hall Number" />
+                    </columns>
+                </TableView>
+                <Button onAction="#onAddBookingButtonClick" text="Add Booking" />
+            </VBox>
+            <VBox HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
+                <Label text="Bookings" />
+                <TableView fx:id="bookingsTableView" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="bookingIdColumn" text="Booking ID" />
+                        <TableColumn fx:id="phoneNumberColumn" text="Phone Number" />
+                        <TableColumn fx:id="seatColumn" text="Seat" />
+                    </columns>
+                </TableView>
+                <Button onAction="#onDeleteBookingButtonClick" text="Delete Booking" />
+            </VBox>
+        </HBox>
+    </center>
+    <bottom>
+        <Button onAction="#onBackButtonClick" text="Back" />
+    </bottom>
+</BorderPane>
+
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns:fx="http://javafx.com/fxml" minHeight="600" minWidth="600"
+      fx:controller="com.cinemamanage.client.controllers.MainViewController"
+      stylesheets="@../css/styles.css"
+      alignment="CENTER" spacing="20.0" prefWidth="300" prefHeight="200">
+  <Button text="Halls" onAction="#onHallsButtonClick"/>
+  <Button text="Sessions" onAction="#onSessionsButtonClick"/>
+  <Button text="Bookings" onAction="#onBookingsButtonClick"/>
+</VBox>
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.*?>
+
+<BorderPane prefHeight="800" prefWidth="1000" stylesheets="@../css/styles.css" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.cinemamanage.client.controllers.HallsViewController">
+    <top>
+        <VBox spacing="10">
+            <HBox spacing="10">
+                <Label text="Choose Hall: " />
+                <ComboBox fx:id="hallsComboBox" onAction="#onHallSelected" />
+                <Button onAction="#onDeleteHallButtonClick" text="Delete Hall" />
+            </HBox>
+            <HBox spacing="10">
+                <Label text="Rows:" />
+                <TextField fx:id="rowsField" />
+                <Label text="Columns:" />
+                <TextField fx:id="columnsField" />
+                <Label text="Hall Number:" />
+                <TextField fx:id="hallNumberField" />
+                <Button onAction="#onCreateNewHallButtonClick" text="Create New Hall" />
+                <Button onAction="#onSaveNewHallButtonClick" text="Save" />
+            </HBox>
+        </VBox>
+    </top>
+    <center>
+        <HBox spacing="10">
+            <GridPane fx:id="hallLayoutGrid" hgap="5" vgap="5">
+                <padding>
+                    <Insets bottom="10" left="10" right="10" top="10" />
+                </padding>
+            </GridPane>
+            <VBox spacing="10">
+                <Label text="Legend:" underline="true">
+                    <padding>
+                        <Insets top="10.0" />
+                    </padding>
+                </Label>
+                <HBox spacing="5">
+                    <Rectangle fill="WHITE" height="20" width="20" />
+                    <Label text="Empty" />
+                </HBox>
+                <HBox spacing="5">
+                    <Rectangle fill="RED" height="20" width="20" />
+                    <Label text="Occupied" />
+                </HBox>
+                <HBox spacing="5">
+                    <Rectangle fill="BLACK" height="20" width="20" />
+                    <Label text="Empty Space" />
+                </HBox>
+                <HBox spacing="5">
+                    <Rectangle fill="BLUE" height="20" width="20" />
+                    <Label text="VIP" />
+                </HBox>
+                <HBox spacing="5">
+                    <Rectangle fill="YELLOW" height="20" width="20" />
+                    <Label text="Accessible" />
+                </HBox>
+            </VBox>
+        </HBox>
+    </center>
+    <bottom>
+        <Button onAction="#onBackButtonClick" text="Back" />
+    </bottom>
+</BorderPane>
+
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/17.0.2-ea"
+            fx:controller="com.cinemamanage.client.controllers.SessionsViewController" stylesheets="@../css/styles.css">
+    <top>
+        <VBox spacing="10">
+            <HBox spacing="10">
+                <Label text="Movie Name:"/>
+                <TextField fx:id="newMovieNameField"/>
+                <Label text="Date:"/>
+                <TextField fx:id="newDateField" promptText="yyyy-MM-dd"/>
+                <Label text="Time:"/>
+                <TextField fx:id="newTimeField" promptText="HH:mm"/>
+                <Label text="Duration:"/>
+                <TextField fx:id="newDurationField"/>
+                <Label text="Hall Number:"/>
+                <ComboBox fx:id="newHallComboBox"/>
+                <Button fx:id="addNewSessionButton" onAction="#onAddNewSessionButtonClick" text="Add New Session"/>
+            </HBox>
+            <HBox spacing="10">
+                <Label text="Filter: "/>
+                <Label text="Movie Name:"/>
+                <TextField fx:id="movieNameField"/>
+                <Label text="Time:"/>
+                <TextField fx:id="timeField"/>
+                <Label text="Hall Number:"/>
+                <TextField fx:id="hallNumberField"/>
+                <Button onAction="#onFilterButtonClick" text="Filter"/>
+            </HBox>
+        </VBox>
+    </top>
+    <center>
+        <TableView fx:id="sessionsTableView">
+            <columns>
+                <TableColumn fx:id="sessionIdColumn" text="Session ID"/>
+                <TableColumn fx:id="movieNameColumn" text="Movie Name"/>
+                <TableColumn fx:id="timeColumn" text="Time"/>
+                <TableColumn fx:id="durationColumn" text="Duration"/>
+                <TableColumn fx:id="hallNumberColumn" text="Hall Number"/>
+            </columns>
+        </TableView>
+    </center>
+    <bottom>
+        <GridPane fx:id="hallLayoutGrid" hgap="5" vgap="5">
+            <padding>
+                <Insets bottom="10" left="10" right="10" top="10"/>
+            </padding>
+        </GridPane>
+        <Button onAction="#onBackButtonClick" text="Back" BorderPane.alignment="BOTTOM_LEFT"/>
+    </bottom>
+</BorderPane>

@@ -203,9 +203,10 @@ public class BookingsViewController {
                 if (response == ButtonType.OK) {
                     try {
                         cinemaService.deleteBooking(selectedBooking.getBookingId());
-                        fetchAllBookings();
                         allBookings.remove(selectedBooking);
                         bookingsTableView.setItems(allBookings);
+                        fetchAllBookings();
+                        fetchAllSessions();
                     } catch (IOException e) {
                         showAlert("Error", "Failed to delete the booking.");
                         e.printStackTrace();

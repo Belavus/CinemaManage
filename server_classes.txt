@@ -1,0 +1,1683 @@
+package main.java.client;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import main.java.models.Booking;
+import main.java.models.Seat;
+import main.java.models.Session;
+import main.java.server.Request;
+import main.java.server.Response;
+
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.lang.reflect.Type;
+import java.net.Socket;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+
+import main.java.models.Hall;
+
+public class Client {
+    private final String host;
+    private final int port;
+    private final Gson gson = new Gson();
+
+    public Client(String host, int port) {
+        this.host = host;
+        this.port = port;
+    }
+
+    public Response sendRequest(Request request) {
+        try (Socket socket = new Socket(host, port);
+             PrintWriter writer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()), true);
+             Scanner reader = new Scanner(new InputStreamReader(socket.getInputStream()))) {
+
+            String requestJson = gson.toJson(request);
+            writer.println(requestJson);
+
+            String responseJson = reader.nextLine();
+            return gson.fromJson(responseJson, Response.class);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new Response("error", e.getMessage());
+        }
+    }
+
+    public static void main(String[] args) {
+        Client client = new Client("localhost", 34567);
+
+        // ===========Create a request to add a hall===========
+        Map<String, String> headers = new HashMap<>();
+        headers.put("action", "hall/add");
+
+
+        Map<String, Object> body = new HashMap<>();
+        Hall hall = new Hall(4,10,6);
+        body.put("hall", hall);
+
+        Request request = new Request();
+        request.setHeaders(headers);
+        request.setBody(body);
+
+        Response response = client.sendRequest(request);
+        System.out.println("Add hall Response: " + response.getStatus() + " - " + response.getMessage());
+
+        // =========== Additional requests to get all HALLS and display the result ===========
+        Gson gson = new Gson();
+        Type hallMapType = new TypeToken<Map<String, Hall>>() {}.getType();
+
+        headers.put("action", "hall/getAll");
+        request.setHeaders(headers);
+        request.setBody(new HashMap<>()); // Empty body
+
+        response = client.sendRequest(request);
+        Map<String,Hall> hallMapFromJson = gson.fromJson(response.getMessage(), hallMapType);
+        System.out.println(hallMapFromJson.get("1"));
+        System.out.println("All Halls: " + hallMapFromJson);
+
+        // =========== Additional requests to add and get all SESSIONS and display the result ===========
+        Seat seat1 = new Seat(1, 1);
+        Seat seat2 = new Seat(1, 2);
+        Session session = new Session("1", "Terminator", "2024-07-18 20:00",60, Arrays.asList(seat1, seat2), 1);
+
+        headers.put("action", "session/add");
+        body.clear();
+        body.put("session", session);
+        request.setHeaders(headers);
+        request.setBody(body);
+
+        response = client.sendRequest(request);
+        System.out.println("Add session Response: " + response.getStatus() + " - " + response.getMessage());
+
+
+        Type sessionMapType = new TypeToken<Map<String, Session>>() {}.getType();
+        headers.put("action", "session/getAll");
+        request.setHeaders(headers);
+        request.setBody(new HashMap<>()); // Empty body
+
+        response = client.sendRequest(request);
+        Map<String,Session> sessionMapFromJson = gson.fromJson(response.getMessage(), sessionMapType);
+        System.out.println(sessionMapFromJson.get("1"));
+        System.out.println("All Sessions: " + sessionMapFromJson);
+
+        // =========== Additional requests to add and get all BOOKINGS and display the result ===========
+        Seat seat = new Seat(1, 1);
+        Booking booking = new Booking("2", "1", seat, "1234567890");
+
+        headers.put("action", "booking/add");
+        body.clear();
+        body.put("booking", booking);
+        request.setHeaders(headers);
+        request.setBody(body);
+
+        response = client.sendRequest(request);
+        System.out.println("Add booking Response: " + response.getStatus() + " - " + response.getMessage());
+
+
+        Type bookingMapType = new TypeToken<Map<String, Booking>>() {}.getType();
+        headers.put("action", "booking/getAll");
+        request.setHeaders(headers);
+        request.setBody(new HashMap<>()); // Empty body
+
+        response = client.sendRequest(request);
+        Map<String,Booking> bookingMapFromJson = gson.fromJson(response.getMessage(), bookingMapType);
+        System.out.println(bookingMapFromJson.get("1"));
+        System.out.println("All Bookings: " + bookingMapFromJson);
+    }
+}
+package main.java.controller;
+
+import com.google.gson.Gson;
+import main.java.BFSMaxDistanceSeatAlgorithm;
+import main.java.IAlgoSeatDistribution;
+import main.java.models.Seat;
+import main.java.server.Response;
+import main.java.services.CinemaService;
+
+import java.util.List;
+import java.util.Map;
+
+public abstract class CinemaController {
+    protected final CinemaService cinemaService;
+    protected final Gson gson = new Gson();
+
+    public CinemaController() {
+        // Initialize CinemaService with default configuration
+        this.cinemaService = new CinemaService(new BFSMaxDistanceSeatAlgorithm());
+    }
+
+    public abstract Response addObject(Map<String, Object> body);
+    public abstract Response deleteObject(Map<String, Object> body);
+    public abstract Response getAllObjects();
+
+
+    public Response generateSeats(Map<String, Object> body) {
+        IAlgoSeatDistribution algorithm;
+        String sessionId = (String) body.get("sessionId");
+        int numberOfPeople = ((Double) body.get("numberOfPeople")).intValue();
+        int distance = ((Double) body.get("distance")).intValue();
+        String algorithmName = (String) body.get("algorithm");
+
+        List<Seat> generatedSeats;
+        if(!cinemaService.setAlgorithm(algorithmName)){
+            return new Response("error", "Unknown algorithm: " + algorithmName);
+        }
+
+        generatedSeats = cinemaService.findBestSeats(sessionId,numberOfPeople,distance);
+        return new Response("success", gson.toJson(generatedSeats));
+    }
+}
+
+package main.java.controller;
+
+import main.java.models.Booking;
+import main.java.server.Response;
+
+import java.util.Map;
+
+public class BookingController extends CinemaController{
+    @Override
+    public Response addObject(Map<String, Object> body) {
+        try {
+            String json = gson.toJson(body.get("booking"));
+            Booking booking = gson.fromJson(json, Booking.class);
+            cinemaService.addBooking(booking);
+            return new Response("success", "Booking added successfully");
+        } catch (Exception e) {
+            return new Response("error", e.getMessage());
+        }
+    }
+
+    @Override
+    public Response deleteObject(Map<String, Object> body) {
+        try {
+            String bookingId = (String) body.get("bookingId");
+            cinemaService.deleteBooking(bookingId);
+            return new Response("success", "Booking deleted successfully");
+        } catch (Exception e) {
+            return new Response("error", e.getMessage());
+        }
+    }
+
+    @Override
+    public Response getAllObjects() {
+        try {
+            Map<String, Booking> bookings = cinemaService.getAllBookings();
+            return new Response("success", gson.toJson(bookings));
+        } catch (Exception e) {
+            return new Response("error", e.getMessage());
+        }
+    }
+}
+
+package main.java.controller;
+
+public class CinemaControllerFactory {
+    public static CinemaController getCinemaController(String controllerName) {
+        switch (controllerName) {
+            case "session":
+                return new SessionController();
+            case "booking":
+                return new BookingController();
+            default:
+                return new HallController();
+        }
+    }
+}
+package main.java.controller;
+
+import main.java.models.Hall;
+import main.java.server.Response;
+
+import java.util.Map;
+
+public class HallController extends CinemaController {
+    @Override
+    public Response addObject(Map<String, Object> body) {
+        try {
+            String json = gson.toJson(body.get("hall"));
+            Hall hall = gson.fromJson(json, Hall.class);
+            cinemaService.addHall(hall);
+            return new Response("success", "Hall added successfully");
+        } catch (Exception e) {
+            return new Response("error", e.getMessage());
+        }
+    }
+
+    @Override
+    public Response deleteObject(Map<String, Object> body) {
+        try {
+            int hallNumber = ((Number) body.get("hallNumber")).intValue();
+            cinemaService.deleteHall(hallNumber);
+            return new Response("success", "Hall deleted successfully");
+        } catch (Exception e) {
+            return new Response("error", e.getMessage());
+        }
+    }
+
+    @Override
+    public Response getAllObjects() {
+        try {
+            Map<String, Hall> halls = cinemaService.getAllHalls();
+            return new Response("success", gson.toJson(halls));
+        } catch (Exception e) {
+            return new Response("error", e.getMessage());
+        }
+    }
+}
+
+package main.java.controller;
+
+import main.java.models.Session;
+import main.java.server.Response;
+
+import java.util.Map;
+
+public class SessionController extends CinemaController{
+    @Override
+    public Response addObject(Map<String, Object> body) {
+        try {
+            String json = gson.toJson(body.get("session"));
+            Session session = gson.fromJson(json, Session.class);
+            cinemaService.addSession(session);
+            return new Response("success", "Session added successfully");
+        } catch (Exception e) {
+            return new Response("error", e.getMessage());
+        }
+    }
+
+    @Override
+    public Response deleteObject(Map<String, Object> body) {
+        try {
+            String sessionId = (String) body.get("sessionId");
+            cinemaService.deleteSession(sessionId);
+            return new Response("success", "Session deleted successfully");
+        } catch (Exception e) {
+            return new Response("error", e.getMessage());
+        }
+    }
+
+    @Override
+    public Response getAllObjects() {
+        try {
+            Map<String, Session> sessions = cinemaService.getAllSessions();
+            return new Response("success", gson.toJson(sessions));
+        } catch (Exception e) {
+            return new Response("error", e.getMessage());
+        }
+    }
+}
+
+package main.java.dao;
+
+import main.java.models.Booking;
+import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.locks.ReentrantReadWriteLock; // for synchronization
+
+public class BookingDao implements IDao<Booking> {
+    private Map<String, Booking> bookings = new HashMap<>();
+    private final String filePath;
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+
+    public BookingDao(String filePath) {
+        this.filePath = filePath;
+        initializeData();
+    }
+
+    @Override
+    public void save(Booking booking) {
+        lock.writeLock().lock();
+        try {
+            bookings.put(booking.getBookingId(), booking);
+            saveData();
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    @Override
+    public Booking get(String id) {
+        lock.readLock().lock();
+        try {
+            return bookings.get(id);
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    @Override
+    public Map<String, Booking> getAll() {
+        lock.readLock().lock();
+        try {
+            return new HashMap<>(bookings);
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    @Override
+    public void update(Booking booking) {
+        lock.writeLock().lock();
+        try {
+            bookings.put(booking.getBookingId(), booking);
+            saveData();
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    @Override
+    public void delete(String id) {
+        lock.writeLock().lock();
+        try {
+            bookings.remove(id);
+            saveData();
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    @Override
+    public void initializeData() {
+        lock.writeLock().lock();
+        try {
+            File file = new File(filePath);
+            if (file.exists() && file.length() != 0) {
+                try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
+                    bookings = (Map<String, Booking>) ois.readObject();
+                } catch (IOException | ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                saveData(); // Create file if it does not exist
+            }
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    @Override
+    public void saveData() {
+        lock.writeLock().lock();
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filePath))) {
+            oos.writeObject(bookings);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+}
+package main.java.dao;
+
+import java.util.Map;
+
+public interface IDao<T> {
+    void save(T t);
+    T get(String id);
+    Map<String, T> getAll();
+    void update(T t);
+    void delete(String id);
+    void initializeData();
+    void saveData();
+}
+
+
+package main.java.dao;
+
+import main.java.models.Hall;
+import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.locks.ReentrantReadWriteLock; // for synchronization
+
+public class HallDao implements IDao<Hall> {
+    private Map<Integer, Hall> halls = new HashMap<>();
+    private final String filePath;
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+
+    public HallDao(String filePath) {
+        this.filePath = filePath;
+        initializeData();
+    }
+
+    @Override
+    public void save(Hall hall) {
+        lock.writeLock().lock();
+        try {
+            halls.put(hall.getHallNumber(), hall);
+            saveData();
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    @Override
+    public Hall get(String id) {
+        lock.readLock().lock();
+        try {
+            return halls.get(Integer.parseInt(id));
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    @Override
+    public Map<String, Hall> getAll() {
+        lock.readLock().lock();
+        try {
+            Map<String, Hall> hallMap = new HashMap<>();
+            for (Map.Entry<Integer, Hall> entry : halls.entrySet()) {
+                hallMap.put(String.valueOf(entry.getKey()), entry.getValue());
+            }
+            return hallMap;
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    @Override
+    public void update(Hall hall) {
+        lock.writeLock().lock();
+        try {
+            halls.put(hall.getHallNumber(), hall);
+            saveData();
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    @Override
+    public void delete(String id) {
+        lock.writeLock().lock();
+        try {
+            halls.remove(Integer.parseInt(id));
+            saveData();
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    @Override
+    public void initializeData() {
+        lock.writeLock().lock();
+        try {
+            File file = new File(filePath);
+            if (file.exists() && file.length() != 0) {
+                try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
+                    halls = (Map<Integer, Hall>) ois.readObject();
+                } catch (IOException | ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                saveData(); // Create file if it does not exist
+            }
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    @Override
+    public void saveData() {
+        lock.writeLock().lock();
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filePath))) {
+            oos.writeObject(halls);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+}
+package main.java.dao;
+
+import main.java.models.Session;
+import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.locks.ReentrantReadWriteLock; // for synchronization
+
+public class SessionDao implements IDao<Session> {
+    private Map<String, Session> sessions = new HashMap<>();
+    private final String filePath;
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+
+    public SessionDao(String filePath) {
+        this.filePath = filePath;
+        initializeData();
+    }
+
+    @Override
+    public void save(Session session) {
+        lock.writeLock().lock();
+        try {
+            sessions.put(session.getSessionId(), session);
+            saveData();
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    @Override
+    public Session get(String id) {
+        lock.readLock().lock();
+        try {
+            return sessions.get(id);
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    @Override
+    public Map<String, Session> getAll() {
+        lock.readLock().lock();
+        try {
+            return new HashMap<>(sessions);
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    @Override
+    public void update(Session session) {
+        lock.writeLock().lock();
+        try {
+            sessions.put(session.getSessionId(), session);
+            saveData();
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    @Override
+    public void delete(String id) {
+        lock.writeLock().lock();
+        try {
+            sessions.remove(id);
+            saveData();
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    @Override
+    public void initializeData() {
+        lock.writeLock().lock();
+        try {
+            File file = new File(filePath);
+            if (file.exists() && file.length() != 0) {
+                try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
+                    sessions = (Map<String, Session>) ois.readObject();
+                } catch (IOException | ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                saveData(); // Create file if it does not exist
+            }
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    @Override
+    public void saveData() {
+        lock.writeLock().lock();
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filePath))) {
+            oos.writeObject(sessions);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+}
+package main.java.models;
+
+import java.io.Serial;
+import java.io.Serializable;
+
+public class Booking implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    private String bookingId;
+    private String sessionId;
+    private Seat seat;
+    private String phoneNumber;
+
+    // Constructors, getters, setters
+    public Booking(String bookingId, String sessionId, Seat seat, String phoneNumber) {
+        this.bookingId = bookingId;
+        this.sessionId = sessionId;
+        this.seat = seat;
+        this.phoneNumber = phoneNumber;
+    }
+
+    public String getBookingId() {
+        return bookingId;
+    }
+
+    public void setBookingId(String bookingId) {
+        this.bookingId = bookingId;
+    }
+
+    public String getSessionId() {
+        return sessionId;
+    }
+
+    public void setSessionId(String sessionId) {
+        this.sessionId = sessionId;
+    }
+
+    public Seat getSeat() {
+        return seat;
+    }
+
+    public void setSeat(Seat seat) {
+        this.seat = seat;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
+    @Override
+    public String toString() {
+        return "Booking{" +
+                "bookingId='" + bookingId + '\'' +
+                ", sessionId='" + sessionId + '\'' +
+                ", seat=" + seat +
+                ", phoneNumber='" + phoneNumber + '\'' +
+                '}';
+    }
+}
+
+
+package main.java.models;
+
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.Objects;
+
+public class Seat implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private int row;
+    private int column;
+    private boolean isBooked;
+
+    // Constructors, getters, setters
+    public Seat(int row, int column) {
+        this.row = row;
+        this.column = column;
+        this.isBooked = false;
+    }
+
+    public int getRow() {
+        return row;
+    }
+
+    public void setRow(int row) {
+        this.row = row;
+    }
+
+    public int getColumn() {
+        return column;
+    }
+
+    public void setColumn(int column) {
+        this.column = column;
+    }
+
+    public boolean isBooked() {
+        return isBooked;
+    }
+
+    public void setBooked(boolean booked) {
+        isBooked = booked;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Seat seat = (Seat) o;
+        return row == seat.row && column == seat.column;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(row, column);
+    }
+
+    @Override
+    public String toString() {
+        return "Seat{" +
+                "row=" + row +
+                ", column=" + column +
+                ", isBooked=" + isBooked +
+                '}';
+    }
+}
+package main.java.models;
+
+import java.io.Serializable;
+import java.util.Arrays;
+
+public class Hall implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    private int hallNumber;
+    private int[][] layout;
+
+    // Constants
+    public static final int EMPTY = 0;
+    public static final int OCCUPIED = 1;
+    public static final int EMPTY_SPACE = 3;
+    public static final int VIP = 4;
+    public static final int ACCESSIBLE = 5;
+
+    // Constructors, getters, setters
+    public Hall(int hallNumber, int rows, int columns) {
+        this.hallNumber = hallNumber;
+        this.layout = new int[rows][columns];
+        for (int[] row : layout) {
+            Arrays.fill(row, EMPTY);
+        }
+    }
+
+    public Hall(int hallNumber, int[][] layout) {
+        this.hallNumber = hallNumber;
+        this.layout = new int[layout.length][];
+        for (int i = 0; i < layout.length; i++) {
+            this.layout[i] = Arrays.copyOf(layout[i], layout[i].length);
+        }
+    }
+
+    public int getHallNumber() {
+        return hallNumber;
+    }
+
+    public void setHallNumber(int hallNumber) {
+        this.hallNumber = hallNumber;
+    }
+
+    public int[][] getLayout() {
+        return layout;
+    }
+
+    public void setLayout(int[][] layout) {
+        this.layout = layout;
+    }
+
+    // Методы для пометки мест
+    public void markAsVIP(int row, int column) {
+        if (isValidPosition(row, column)) {
+            layout[row][column] = VIP;
+        }
+    }
+
+    public void markAsAccessible(int row, int column) {
+        if (isValidPosition(row, column)) {
+            layout[row][column] = ACCESSIBLE;
+        }
+    }
+
+    public void markAsEmptySpace(int row, int column) {
+        if (isValidPosition(row, column)) {
+            layout[row][column] = EMPTY_SPACE;
+        }
+    }
+
+    private boolean isValidPosition(int row, int column) {
+        return row >= 0 && row < layout.length && column >= 0 && column < layout[0].length;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        for (int[] row : layout) {
+            sb.append(Arrays.toString(row)).append("\n");
+        }
+
+        return "Hall{" +
+                "hallNumber=" + hallNumber +
+                ", layout=" + '\n' + sb +
+                '}';
+    }
+}
+
+
+package main.java.models;
+
+import main.java.models.Seat;
+
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+
+public class Session implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private String sessionId;
+    private String movieName;
+    private String time; // Time as a String
+    private int duration; // Duration in minutes
+    private List<Seat> seats;
+    private int hallNumber;
+
+    public Session(String sessionId, String movieName, String time, int duration, List<Seat> seats, int hallNumber) {
+        this.sessionId = sessionId;
+        this.movieName = movieName;
+        this.time = time;
+        this.duration = duration;
+        this.seats = seats != null ? new ArrayList<>(seats) : new ArrayList<>();
+        this.hallNumber = hallNumber;
+    }
+
+    public Session(String sessionId, String movieName, String time, int duration, int hallNumber) {
+        this(sessionId, movieName, time, duration, new ArrayList<>(), hallNumber);
+    }
+
+    // Getters and setters...
+
+    public String getSessionId() {
+        return sessionId;
+    }
+
+    public void setSessionId(String sessionId) {
+        this.sessionId = sessionId;
+    }
+
+    public String getMovieName() {
+        return movieName;
+    }
+
+    public void setMovieName(String movieName) {
+        this.movieName = movieName;
+    }
+
+    public String getTime() {
+        return time;
+    }
+
+    public void setTime(String time) {
+        this.time = time;
+    }
+
+    public int getDuration() {
+        return duration;
+    }
+
+    public void setDuration(int duration) {
+        this.duration = duration;
+    }
+
+    public List<Seat> getSeats() {
+        return new ArrayList<>(seats);
+    }
+
+    public void setSeats(List<Seat> seats) {
+        this.seats = new ArrayList<>(seats);
+    }
+
+    public int getHallNumber() {
+        return hallNumber;
+    }
+
+    public void setHallNumber(int hallNumber) {
+        this.hallNumber = hallNumber;
+    }
+
+    // Method to add a seat
+    public void addSeat(Seat seat) {
+        if (!seats.contains(seat)) {
+            seats.add(seat);
+        }
+    }
+
+    // Method to remove a seat
+    public void removeSeat(Seat seat) {
+        seats.remove(seat);
+    }
+
+    @Override
+    public String toString() {
+        return "Session{" +
+                "sessionId='" + sessionId + '\'' +
+                ", movieName='" + movieName + '\'' +
+                ", time='" + time + '\'' +
+                ", duration=" + duration +
+                ", seats=" + seats +
+                ", hallNumber=" + hallNumber +
+                '}';
+    }
+}
+
+package main.java.server;
+
+import com.google.gson.Gson;
+import main.java.controller.CinemaController;
+import main.java.controller.CinemaControllerFactory;
+
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.net.Socket;
+import java.util.Scanner;
+
+public class HandleRequest implements Runnable {
+    private final Socket clientSocket;
+
+    public HandleRequest(Socket clientSocket) {
+        this.clientSocket = clientSocket;
+    }
+
+    @Override
+    public void run() {
+        try (Scanner reader = new Scanner(new InputStreamReader(clientSocket.getInputStream()));
+             PrintWriter writer = new PrintWriter(new OutputStreamWriter(clientSocket.getOutputStream()), true)) {
+
+            String requestJson = reader.nextLine();
+            Gson gson = new Gson();
+            Request request = gson.fromJson(requestJson, Request.class);
+
+            Response response = handleRequest(request);
+
+            String responseJson = gson.toJson(response);
+            writer.println(responseJson);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private Response handleRequest(Request request) {
+        String action = request.getHeaders().get("action");
+        String controllerName;
+        String specificAction;
+        String[] splitAction = action.split("/");
+        controllerName = splitAction[0];
+        specificAction = splitAction[1];
+
+        CinemaController controller = CinemaControllerFactory.getCinemaController(controllerName);
+        switch (specificAction) {
+            case "add":
+                controller.addObject(request.getBody());
+            case "delete":
+                controller.deleteObject(request.getBody());
+            case "getAll":
+                return controller.getAllObjects();
+            case "generate":
+                return controller.generateSeats(request.getBody());
+            default:
+                return new Response("error", "Unknown action: " + action);
+        }
+    }
+}
+
+
+package main.java.server;
+
+public class ServerDriver {
+    public static void main(String[] args) {
+        Server server = new Server(34567);
+        new Thread(server).start();
+    }
+}
+
+package main.java.server;
+
+public class Response {
+    private String status;
+    private String message;
+
+    public Response(String status, String message) {
+        this.status = status;
+        this.message = message;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+}
+
+package main.java.server;
+
+import java.util.Map;
+
+public class Request {
+    private Map<String, String> headers;
+    private Map<String, Object> body;
+
+    public Map<String, String> getHeaders() {
+        return headers;
+    }
+
+    public void setHeaders(Map<String, String> headers) {
+        this.headers = headers;
+    }
+
+    public Map<String, Object> getBody() {
+        return body;
+    }
+
+    public void setBody(Map<String, Object> body) {
+        this.body = body;
+    }
+}
+
+package main.java.server;
+
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
+
+public class Server implements Runnable {
+    private final int port;
+    private boolean running = true;
+
+    public Server(int port) {
+        this.port = port;
+    }
+
+    @Override
+    public void run() {
+        try (ServerSocket serverSocket = new ServerSocket(port)) {
+            System.out.println("Server started on port " + port);
+
+            while (running) {
+                Socket clientSocket = serverSocket.accept();
+                new Thread(new HandleRequest(clientSocket)).start();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void stop() {
+        running = false;
+    }
+
+    public static void main(String[] args) {
+        Server server = new Server(34567);
+        new Thread(server).start();
+    }
+}
+package main.java.services;
+
+import main.java.BFSMaxDistanceSeatAlgorithm;
+import main.java.IAlgoSeatDistribution;
+import main.java.SimpleMaxDistanceSeatAlgorithm;
+import main.java.models.Hall;
+import main.java.models.Seat;
+import main.java.models.Session;
+import main.java.models.Booking;
+import main.java.dao.HallDao;
+import main.java.dao.SessionDao;
+import main.java.dao.BookingDao;
+import main.java.util.ConfigUtil;
+
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.locks.ReentrantReadWriteLock; //synchronization for critical sections
+
+public class CinemaService {
+    private IAlgoSeatDistribution algorithm;
+    private final SessionDao sessionDao;
+    private final BookingDao bookingDao;
+    private final HallDao hallDao;
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
+    public CinemaService(SessionDao sessionDao, BookingDao bookingDao, HallDao hallDao) {
+        this.sessionDao = sessionDao;
+        this.bookingDao = bookingDao;
+        this.hallDao = hallDao;
+        initializeData();
+    }
+
+    public CinemaService(IAlgoSeatDistribution algo) {
+        this(
+                new SessionDao(ConfigUtil.getProperty("session.file.path")),
+                new BookingDao(ConfigUtil.getProperty("booking.file.path")),
+                new HallDao(ConfigUtil.getProperty("hall.file.path"))
+        );
+        this.algorithm = algo;
+    }
+
+    // Initialize data from files
+    private void initializeData() {
+        sessionDao.initializeData();
+        bookingDao.initializeData();
+        hallDao.initializeData();
+    }
+
+    // Manage sessions
+    public void addSession(Session session) throws IOException {
+        lock.writeLock().lock();
+        try {
+            if (hallDao.get(String.valueOf(session.getHallNumber())) == null) {
+                throw new IllegalArgumentException("Hall number " + session.getHallNumber() + " does not exist.");
+            }
+
+            // checking for session overlapping
+            LocalDateTime startTime = LocalDateTime.parse(session.getTime(), dateTimeFormatter);
+            if (isSessionOverlapping(session.getHallNumber(), startTime, session.getDuration())) {
+                throw new IllegalArgumentException("The session time overlaps with an existing session in the same hall.");
+            }
+
+            sessionDao.save(session);
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    public boolean isSessionOverlapping(int hallNumber, LocalDateTime startTime, int duration) {
+        lock.readLock().lock();
+        try {
+            LocalDateTime endTime = startTime.plusMinutes(duration);
+            for (Session session : sessionDao.getAll().values()) {
+                if (session.getHallNumber() == hallNumber) {
+                    LocalDateTime existingStartTime = LocalDateTime.parse(session.getTime(), dateTimeFormatter);
+                    LocalDateTime existingEndTime = existingStartTime.plusMinutes(session.getDuration());
+                    if (startTime.isBefore(existingEndTime) && endTime.isAfter(existingStartTime)) {
+                        return true; // sessions overlapping
+                    }
+                }
+            }
+            return false;
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    public Session getSession(String sessionId) {
+        lock.readLock().lock();
+        try {
+            return sessionDao.get(sessionId);
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    public Map<String, Session> getAllSessions() {
+        lock.readLock().lock();
+        try {
+            return sessionDao.getAll();
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    public void updateSession(Session session) {
+        lock.writeLock().lock();
+        try {
+            if (sessionDao.get(session.getSessionId()) == null) {
+                throw new IllegalArgumentException("Session with ID " + session.getSessionId() + " does not exist.");
+            }
+            sessionDao.update(session);
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    public void deleteSession(String sessionId) {
+        lock.writeLock().lock();
+        try {
+            // Remove all bookings associated with the session
+            for (Booking booking : bookingDao.getAll().values()) {
+                if (booking.getSessionId().equals(sessionId)) {
+                    bookingDao.delete(booking.getBookingId());
+                }
+            }
+            // Remove the session itself
+            sessionDao.delete(sessionId);
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    public void addSeatToSession(String sessionId, Seat seat) {
+        lock.writeLock().lock();
+        try {
+            Session session = sessionDao.get(sessionId);
+            if (session != null) {
+                session.addSeat(seat);
+                sessionDao.update(session);
+            } else {
+                throw new IllegalArgumentException("Session with ID " + sessionId + " does not exist.");
+            }
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    public void removeSeatFromSession(String sessionId, Seat seat) {
+        lock.writeLock().lock();
+        try {
+            Session session = sessionDao.get(sessionId);
+            if (session != null) {
+                session.removeSeat(seat);
+                sessionDao.update(session);
+            } else {
+                throw new IllegalArgumentException("Session with ID " + sessionId + " does not exist.");
+            }
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    // Manage bookings
+    public void addBooking(Booking booking) {
+        lock.writeLock().lock();
+        try {
+            Session session = sessionDao.get(booking.getSessionId());
+            if (session == null) {
+                throw new IllegalArgumentException("Session with ID " + booking.getSessionId() + " does not exist.");
+            }
+
+            Hall hall = hallDao.get(String.valueOf(session.getHallNumber()));
+            if (hall == null) {
+                throw new IllegalArgumentException("Hall with number " + session.getHallNumber() + " does not exist.");
+            }
+
+            int row = booking.getSeat().getRow();
+            int col = booking.getSeat().getColumn();
+
+            // Check if the seat is marked as EMPTY_SPACE
+            if (hall.getLayout()[row][col] == Hall.EMPTY_SPACE) {
+                throw new IllegalArgumentException("Seat at row " + row + " and column " + col + " is marked as EMPTY_SPACE and cannot be booked.");
+            }
+
+            // Check if the seat is already booked
+            for (Seat seat : session.getSeats()) {
+                if (seat.getRow() == row && seat.getColumn() == col) {
+                    throw new IllegalArgumentException("Seat at row " + row + " and column " + col + " is already booked.");
+                }
+            }
+
+            bookingDao.save(booking);
+            addSeatToSession(booking.getSessionId(), booking.getSeat());
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+
+    public Booking getBooking(String bookingId) {
+        lock.readLock().lock();
+        try {
+            return bookingDao.get(bookingId);
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    public Map<String, Booking> getAllBookings() {
+        lock.readLock().lock();
+        try {
+            return bookingDao.getAll();
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    public void updateBooking(Booking booking) {
+        lock.writeLock().lock();
+        try {
+            if (bookingDao.get(booking.getBookingId()) == null) {
+                throw new IllegalArgumentException("Booking with ID " + booking.getBookingId() + " does not exist.");
+            }
+            bookingDao.update(booking);
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    public void deleteBooking(String bookingId) {
+        lock.writeLock().lock();
+        try {
+            Booking booking = bookingDao.get(bookingId);
+            if (booking != null) {
+                removeSeatFromSession(booking.getSessionId(), booking.getSeat());
+                bookingDao.delete(bookingId);
+            } else {
+                throw new IllegalArgumentException("Booking with ID " + bookingId + " does not exist.");
+            }
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    // Manage halls
+    public void addHall(Hall hall) {
+        lock.writeLock().lock();
+        try {
+            hallDao.save(hall);
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    public Hall getHall(int hallNumber) {
+        lock.readLock().lock();
+        try {
+            return hallDao.get(String.valueOf(hallNumber));
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    public Map<String, Hall> getAllHalls() {
+        lock.readLock().lock();
+        try {
+            return hallDao.getAll();
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    public void updateHall(Hall hall) {
+        lock.writeLock().lock();
+        try {
+            if (hallDao.get(String.valueOf(hall.getHallNumber())) == null) {
+                throw new IllegalArgumentException("Hall with number " + hall.getHallNumber() + " does not exist.");
+            }
+            hallDao.update(hall);
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    public void deleteHall(int hallNumber) {
+        lock.writeLock().lock();
+        try {
+            //delete sessions connected with the hall
+            for (Session session : sessionDao.getAll().values()) {
+                if (session.getHallNumber() == hallNumber) {
+                    deleteSession(session.getSessionId());
+                }
+            }
+            //delete hall
+            hallDao.delete(String.valueOf(hallNumber));
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    // Seat allocation algorithm
+    public boolean setAlgorithm(String algorithmName) {
+        switch (algorithmName) {
+            case "Simple":
+                this.algorithm = new SimpleMaxDistanceSeatAlgorithm();
+                break;
+            case "BFS":
+                this.algorithm = new BFSMaxDistanceSeatAlgorithm();
+                break;
+            default:
+                return false;
+        }
+        return true;
+    }
+
+    public List<Seat> findBestSeats(String sessionId, int numberOfSeats, int distance) {
+        lock.readLock().lock();
+        try {
+            Session session = sessionDao.get(sessionId);
+            int [][] seatLayout = getHall(session.getHallNumber()).getLayout();//return copy of layout
+            for(Seat seat : session.getSeats()) {
+                seatLayout[seat.getRow()][seat.getColumn()] = Hall.OCCUPIED;
+            }
+            int[] bestSeatsIndices = this.algorithm.findBestSeats(seatLayout, numberOfSeats, distance);
+
+            List<Seat> bestSeats = new ArrayList<>();
+            for (int i = 0; i < bestSeatsIndices.length; i += 2) {
+                int row = bestSeatsIndices[i];
+                int column = bestSeatsIndices[i + 1];
+                bestSeats.add(new Seat(row, column));
+            }
+
+            return bestSeats;
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+}
+package main.java.util;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+
+public class ConfigUtil {
+    private static final String CONFIG_FILE = "config.properties";
+    private static Properties properties = new Properties();
+
+    static {
+        try (InputStream inputStream = ConfigUtil.class.getClassLoader().getResourceAsStream(CONFIG_FILE)) {
+            if (inputStream != null) {
+                properties.load(inputStream);
+            } else {
+                throw new RuntimeException("Configuration file " + CONFIG_FILE + " not found in the classpath.");
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load configuration file " + CONFIG_FILE, e);
+        }
+    }
+
+    public static String getProperty(String key) {
+        return properties.getProperty(key);
+    }
+}
+
+package test.java.services;
+
+import main.java.services.CinemaService;
+import main.java.models.Session;
+import main.java.models.Seat;
+import main.java.models.Booking;
+import main.java.models.Hall;
+import main.java.dao.SessionDao;
+import main.java.dao.BookingDao;
+import main.java.dao.HallDao;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class CinemaServiceTest {
+    private static CinemaService cinemaService;
+    private static File sessionFile;
+    private static File bookingFile;
+    private static File hallFile;
+
+    @BeforeAll
+    public static void setUp() throws Exception {
+        sessionFile = createInitializedFile("sessions.ser");
+        bookingFile = createInitializedFile("bookings.ser");
+        hallFile = createInitializedFile("halls.ser");
+
+        SessionDao sessionDao = new SessionDao(sessionFile.getAbsolutePath());
+        BookingDao bookingDao = new BookingDao(bookingFile.getAbsolutePath());
+        HallDao hallDao = new HallDao(hallFile.getAbsolutePath());
+
+        cinemaService = new CinemaService(sessionDao, bookingDao, hallDao);
+        cinemaService.setAlgorithm("BFS");
+    }
+
+    @AfterAll
+    public static void tearDown() {
+        if (sessionFile.exists()) {
+            sessionFile.delete();
+        }
+        if (bookingFile.exists()) {
+            bookingFile.delete();
+        }
+        if (hallFile.exists()) {
+            hallFile.delete();
+        }
+    }
+
+    private static File createInitializedFile(String filename) throws IOException {
+        File file = File.createTempFile(filename, ".ser");
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file))) {
+            oos.writeObject(new HashMap<>());
+        }
+        return file;
+    }
+
+    @BeforeEach
+    public void initializeData() {
+    }
+
+    @Test
+    public void testAddAndGetSession() throws IOException {
+        Seat seat1 = new Seat(1, 1);
+        Seat seat2 = new Seat(1, 2);
+        Session session = new Session("1", "Movie", "2024-07-18 00:00", 60, Arrays.asList(seat1, seat2), 1);
+        cinemaService.addSession(session);
+
+        Session retrievedSession = cinemaService.getSession("1");
+        assertNotNull(retrievedSession);
+        assertEquals("Movie", retrievedSession.getMovieName());
+        assertEquals("2024-07-18 00:00", retrievedSession.getTime());
+    }
+
+    @Test
+    public void testAddAndGetBooking() throws IOException {
+        Hall hall = new Hall(1, 5, 5);
+        cinemaService.addHall(hall);
+
+        Seat seat = new Seat(1, 1);
+        Session session = new Session("1", "Movie", "2024-07-18 20:00", 120, Arrays.asList(seat), 1);
+        cinemaService.addSession(session);
+
+        Booking booking = new Booking("1", "1", new Seat(2,2), "1234567890");
+        cinemaService.addBooking(booking);
+
+        Booking retrievedBooking = cinemaService.getBooking("1");
+        assertNotNull(retrievedBooking);
+        assertEquals("1", retrievedBooking.getSessionId());
+        assertEquals("1234567890", retrievedBooking.getPhoneNumber());
+    }
+
+    @Test
+    public void testAddAndGetHall() {
+        Hall hall = new Hall(1, 5, 5);
+        hall.markAsVIP(1, 1);
+        hall.markAsAccessible(2, 2);
+        hall.markAsEmptySpace(3, 3);
+        cinemaService.addHall(hall);
+
+        Hall retrievedHall = cinemaService.getHall(1);
+        assertNotNull(retrievedHall);
+        assertEquals(5, retrievedHall.getLayout().length);
+        assertEquals(Hall.VIP, retrievedHall.getLayout()[1][1]);
+        assertEquals(Hall.ACCESSIBLE, retrievedHall.getLayout()[2][2]);
+        assertEquals(Hall.EMPTY_SPACE, retrievedHall.getLayout()[3][3]);
+    }
+
+    @Test
+    public void testFindBestSeats() throws IOException {
+        int[][] layout = {
+                {0, 0, 1, 0, 0},
+                {0, 0, 0, 0, 0},
+                {0, 1, 1, 1, 0}
+        };
+        Hall hall = new Hall(1, layout);
+        cinemaService.addHall(hall);
+
+        Seat seat1 = new Seat(0, 2);
+        Seat seat2 = new Seat(2, 1);
+        Seat seat3 = new Seat(2, 2);
+        Seat seat4 = new Seat(2, 3);
+        Session session = new Session("1", "Movie", "2024-07-18 20:00", 120, Arrays.asList(seat1, seat2, seat3, seat4), 1);
+        cinemaService.addSession(session);
+
+        List<Seat> bestSeats = cinemaService.findBestSeats("1", 2, 1);
+        assertNotNull(bestSeats);
+        assertEquals(2, bestSeats.size());
+    }
+
+    @Test
+    public void testGetAllSessions() throws IOException {
+        Seat seat1 = new Seat(1, 1);
+        Seat seat2 = new Seat(1, 2);
+        Session session = new Session("1", "Movie", "2024-07-18 20:00", 120, Arrays.asList(seat1, seat2), 1);
+        cinemaService.addSession(session);
+
+        Map<String, Session> sessions = cinemaService.getAllSessions();
+        assertNotNull(sessions);
+        assertEquals(1, sessions.size());
+        assertTrue(sessions.containsKey("1"));
+    }
+
+    @Test
+    public void testGetAllBookings() throws IOException {
+        Hall hall = new Hall(1, 5, 5);
+        cinemaService.addHall(hall);
+
+        Seat seat = new Seat(1, 1);
+        Session session = new Session("1", "Movie", "2024-07-18 20:00", 120, Arrays.asList(seat), 1);
+        cinemaService.addSession(session);
+
+        Booking booking = new Booking("1", "1", new Seat(2,2), "1234567890");
+        cinemaService.addBooking(booking);
+
+        Map<String, Booking> bookings = cinemaService.getAllBookings();
+        assertNotNull(bookings);
+        assertEquals(1, bookings.size());
+        assertTrue(bookings.containsKey("1"));
+    }
+
+    @Test
+    public void testGetAllHalls() {
+        Hall hall = new Hall(1, 5, 5);
+        cinemaService.addHall(hall);
+
+        Map<String, Hall> halls = cinemaService.getAllHalls();
+        assertNotNull(halls);
+        assertEquals(1, halls.size());
+        assertTrue(halls.containsKey("1"));
+    }
+}

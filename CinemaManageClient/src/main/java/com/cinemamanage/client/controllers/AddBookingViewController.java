@@ -42,12 +42,12 @@ public class AddBookingViewController {
         this.cinemaService = cinemaService;
     }
 
-    public void setSession(Session session) {
+    public void setSession(Session session) throws IOException {
         this.session = session;
         displayHallLayout();
     }
 
-    private void displayHallLayout() {
+    private void displayHallLayout() throws IOException {
         hallLayoutGrid.getChildren().clear();
         Hall hall = cinemaService.getAllHalls().get(String.valueOf(session.getHallNumber()));
         if (hall != null) {
@@ -155,7 +155,6 @@ public class AddBookingViewController {
             showAlert("Error", "Phone number must be 10 digits.");
         }
     }
-
 
     private String generateNewBookingId() {
         int maxId = cinemaService.getAllBookings().values().stream().mapToInt(booking -> Integer.parseInt(booking.getBookingId())).max().orElse(0);

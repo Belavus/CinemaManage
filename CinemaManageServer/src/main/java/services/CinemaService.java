@@ -41,6 +41,7 @@ public class CinemaService {
                 new BookingDao(ConfigUtil.getProperty("booking.file.path")),
                 new HallDao(ConfigUtil.getProperty("hall.file.path"))
         );
+        this.algorithm = algo;
     }
 
     // Initialize data from files
@@ -58,7 +59,7 @@ public class CinemaService {
                 throw new IllegalArgumentException("Hall number " + session.getHallNumber() + " does not exist.");
             }
 
-            // Проверка на перекрытие сеансов
+            // checking for session overlapping
             LocalDateTime startTime = LocalDateTime.parse(session.getTime(), dateTimeFormatter);
             if (isSessionOverlapping(session.getHallNumber(), startTime, session.getDuration())) {
                 throw new IllegalArgumentException("The session time overlaps with an existing session in the same hall.");
@@ -79,7 +80,7 @@ public class CinemaService {
                     LocalDateTime existingStartTime = LocalDateTime.parse(session.getTime(), dateTimeFormatter);
                     LocalDateTime existingEndTime = existingStartTime.plusMinutes(session.getDuration());
                     if (startTime.isBefore(existingEndTime) && endTime.isAfter(existingStartTime)) {
-                        return true; // Сеансы перекрываются
+                        return true; // sessions overlapping
                     }
                 }
             }
@@ -317,6 +318,7 @@ public class CinemaService {
         }
         return true;
     }
+
     public List<Seat> findBestSeats(String sessionId, int numberOfSeats, int distance) {
         lock.readLock().lock();
         try {

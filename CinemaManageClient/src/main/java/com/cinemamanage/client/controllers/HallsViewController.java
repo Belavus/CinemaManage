@@ -70,29 +70,51 @@ public class HallsViewController {
         hallsComboBox.setItems(FXCollections.observableArrayList(cinemaService.getAllHalls().keySet()));
     }
 
-    @FXML
-    protected void onGetAllHallsButtonClick() {
-        try {
-            fetchAllHalls();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+//    @FXML
+//    protected void onGetAllHallsButtonClick() {
+//        try {
+//            fetchAllHalls();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//    }
 
-    @FXML
-    protected void onNewHallButtonClick() {
-        hallLayoutGrid.getChildren().clear();
-        rowsField.clear();
-        columnsField.clear();
-        hallNumberField.clear();
-    }
+//    @FXML
+//    protected void onNewHallButtonClick() {
+//        hallLayoutGrid.getChildren().clear();
+//        rowsField.clear();
+//        columnsField.clear();
+//        hallNumberField.clear();
+//    }
 
     @FXML
     protected void onCreateNewHallButtonClick() {
-        int rows = Integer.parseInt(rowsField.getText());
-        int columns = Integer.parseInt(columnsField.getText());
-        int hallNumber = Integer.parseInt(hallNumberField.getText());
+        // Check if all fields are filled
+        if (rowsField.getText().isEmpty() || columnsField.getText().isEmpty() || hallNumberField.getText().isEmpty()) {
+            showAlert("Input Error", "All fields must be filled.");
+            return;
+        }
 
+        // Check if the input values are valid integers
+        int rows;
+        int columns;
+        int hallNumber;
+        try {
+            rows = Integer.parseInt(rowsField.getText());
+            columns = Integer.parseInt(columnsField.getText());
+            hallNumber = Integer.parseInt(hallNumberField.getText());
+        } catch (NumberFormatException e) {
+            showAlert("Input Error", "Rows, Columns, and Hall Number must be numbers.");
+            return;
+        }
+
+        // Check if the values are positive
+        if (rows <= 0 || columns <= 0 || hallNumber <= 0) {
+            showAlert("Input Error", "Rows, Columns, and Hall Number must be positive numbers.");
+            return;
+        }
+
+        // Create new hall layout
         int[][] layout = new int[rows][columns];
         currentEditingHall = new Hall(hallNumber, layout);
         displayHallLayout(currentEditingHall);
@@ -225,5 +247,13 @@ public class HallsViewController {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private void showAlert(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 }

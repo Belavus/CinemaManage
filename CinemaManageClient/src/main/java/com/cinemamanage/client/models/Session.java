@@ -11,7 +11,7 @@ public class Session implements Serializable {
 
     private String sessionId;
     private String movieName;
-    private String time; // Time as a String
+    private String time;
     private int duration; // Duration in minutes
     private List<Seat> seats;
     private int hallNumber;

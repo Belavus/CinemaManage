@@ -203,6 +203,7 @@ public class BookingsViewController {
                 if (response == ButtonType.OK) {
                     try {
                         cinemaService.deleteBooking(selectedBooking.getBookingId());
+                        fetchAllBookings();
                         allBookings.remove(selectedBooking);
                         bookingsTableView.setItems(allBookings);
                     } catch (IOException e) {

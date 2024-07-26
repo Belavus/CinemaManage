@@ -36,13 +36,17 @@ public class SessionsViewController {
     private TextField timeField;
 
     @FXML
+    private TextField newDateField;
+
+    @FXML
+    private TextField newTimeField;
+
+
+    @FXML
     private TextField hallNumberField;
 
     @FXML
     private TextField newMovieNameField;
-
-    @FXML
-    private TextField newTimeField;
 
     @FXML
     private TextField newDurationField;
@@ -191,14 +195,24 @@ public class SessionsViewController {
     @FXML
     protected void onAddNewSessionButtonClick() {
         String movieName = newMovieNameField.getText();
+        String date = newDateField.getText();
         String time = newTimeField.getText();
         String durationStr = newDurationField.getText();
         String hallNumberStr = newHallComboBox.getSelectionModel().getSelectedItem();
-        if (movieName.isEmpty() || time.isEmpty() || durationStr.isEmpty() || hallNumberStr == null) {
+
+        if (movieName.isEmpty() || date.isEmpty() || time.isEmpty() || durationStr.isEmpty() || hallNumberStr == null) {
             showAlert("Error", "All fields must be filled.");
             return;
         }
-        LocalDateTime startTime = LocalDateTime.parse(time, dateTimeFormatter);
+
+        LocalDateTime startTime;
+        try {
+            startTime = LocalDateTime.parse(date + " " + time, dateTimeFormatter);
+        } catch (Exception e) {
+            showAlert("Error", "Invalid date or time format.");
+            return;
+        }
+
         int duration = Integer.parseInt(durationStr);
         int hallNumber = Integer.parseInt(hallNumberStr);
 
@@ -208,7 +222,7 @@ public class SessionsViewController {
         }
 
         String sessionId = (selectedSession == null) ? generateNewSessionId() : selectedSession.getSessionId();
-        Session newSession = new Session(sessionId, movieName, time, duration, hallNumber);
+        Session newSession = new Session(sessionId, movieName, startTime.format(dateTimeFormatter), duration, hallNumber);
         try {
             if (selectedSession == null) {
                 cinemaService.addSession(newSession);
@@ -303,10 +317,12 @@ public class SessionsViewController {
 
     private void clearSessionFields() {
         newMovieNameField.clear();
+        newDateField.clear();
         newTimeField.clear();
         newDurationField.clear();
         newHallComboBox.getSelectionModel().clearSelection();
     }
+
 
     public void onClose() {
         try {

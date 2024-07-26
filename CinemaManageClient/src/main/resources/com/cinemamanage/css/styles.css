@@ -6,7 +6,7 @@
     -fx-background-position: center center;
 }
 
-.label, .button, .text-field, .combo-box {
+.label, .button, .text-field {
     -fx-text-fill: #ffffff;
 }
 
@@ -21,7 +21,7 @@
     -fx-text-fill: #ffffff; /* Цвет текста на кнопке */
     -fx-border-color: #555555; /* Цвет границы кнопки */
     -fx-border-width: 1px;
-    -fx-background-radius: 3px; /* Скругленные углы кнопки */
+    -fx-background-radius: 5px; /* Скругленные углы кнопки */
     -fx-padding: 5px; /* Внутренние отступы */
 }
 
@@ -33,15 +33,47 @@
     -fx-background-color: #222222; /* Цвет фона при нажатии */
 }
 
-.text-field, .combo-box {
+.text-field {
     -fx-background-color: #333333; /* Темный цвет фона для полей ввода и комбобоксов */
     -fx-text-fill: #ffffff; /* Цвет текста */
     -fx-border-color: #555555; /* Цвет границы */
     -fx-border-width: 1px;
-    -fx-background-radius: 3px; /* Скругленные углы */
+    -fx-background-radius: 5px; /* Скругленные углы */
     -fx-padding: 5px; /* Внутренние отступы */
 }
 
-.text-field:focused, .combo-box:focused {
+.text-field:focused {
     -fx-border-color: #777777; /* Цвет границы при фокусе */
+}
+
+/****************/
+.combo-box, .combo-box-base {
+    -fx-background-color: #333; /* Темный фон */
+    -fx-text-fill: white; /* Белый цвет текста */
+}
+
+.combo-box .list-cell, .combo-box-base .list-cell {
+    -fx-background-color: #333; /* Темный фон для ячеек списка */
+    -fx-text-fill: white; /* Белый цвет текста в ячейках списка */
+}
+
+.combo-box .list-cell:hover, .combo-box-base .list-cell:hover {
+    -fx-background-color: #555; /* Светлее при наведении */
+}
+
+.combo-box .arrow, .combo-box-base .arrow {
+    -fx-background-color: #444; /* Темный фон стрелки */
+}
+
+.combo-box .arrow-button, .combo-box-base .arrow-button {
+    -fx-background-color: #444; /* Темный фон кнопки стрелки */
+}
+
+.combo-box .arrow-button .arrow, .combo-box-base .arrow-button .arrow {
+    -fx-background-color: #fff; /* Белая стрелка */
+}
+
+/* Убедитесь, что применяете стиль для отображаемого текста */
+.combo-box .label, .combo-box-base .label {
+    -fx-text-fill: white; /* Белый цвет текста */
 }

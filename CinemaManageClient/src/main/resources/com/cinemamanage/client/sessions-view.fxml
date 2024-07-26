@@ -11,8 +11,10 @@
             <HBox spacing="10">
                 <Label text="Movie Name:"/>
                 <TextField fx:id="newMovieNameField"/>
+                <Label text="Date:"/>
+                <TextField fx:id="newDateField" promptText="yyyy-MM-dd"/>
                 <Label text="Time:"/>
-                <TextField fx:id="newTimeField"/>
+                <TextField fx:id="newTimeField" promptText="HH:mm"/>
                 <Label text="Duration:"/>
                 <TextField fx:id="newDurationField"/>
                 <Label text="Hall Number:"/>

@@ -48,9 +48,9 @@ public class HandleRequest implements Runnable {
         CinemaController controller = CinemaControllerFactory.getCinemaController(controllerName);
         switch (specificAction) {
             case "add":
-                controller.addObject(request.getBody());
+                return controller.addObject(request.getBody());
             case "delete":
-                controller.deleteObject(request.getBody());
+                return controller.deleteObject(request.getBody());
             case "getAll":
                 return controller.getAllObjects();
             case "generate":

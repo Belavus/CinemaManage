@@ -207,6 +207,7 @@ public class BookingsViewController {
                         bookingsTableView.setItems(allBookings);
                         fetchAllBookings();
                         fetchAllSessions();
+                        displayBookingsForSession(selectedSession);
                     } catch (IOException e) {
                         showAlert("Error", "Failed to delete the booking.");
                         e.printStackTrace();

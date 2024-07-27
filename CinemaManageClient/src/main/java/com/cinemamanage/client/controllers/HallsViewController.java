@@ -57,14 +57,18 @@ public class HallsViewController {
                     });
                 }
             });
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException e){
+            showAlert("Connection Error","Connection with server lost!");
         }
     }
 
-    private void fetchAllHalls() throws IOException {
-        cinemaService.fetchAllHalls();
-        hallsComboBox.setItems(FXCollections.observableArrayList(cinemaService.getAllHalls().keySet()));
+    private void fetchAllHalls() {
+        try {
+            cinemaService.fetchAllHalls();
+            hallsComboBox.setItems(FXCollections.observableArrayList(cinemaService.getAllHalls().keySet()));
+        }catch (IOException e){
+            showAlert("Connection Error","Connection with server lost!");
+        }
     }
 
     @FXML
@@ -202,7 +206,6 @@ public class HallsViewController {
         contextMenu.getItems().addAll(emptyItem, occupiedItem, emptySpaceItem, vipItem, accessibleItem);
         contextMenu.show(hallLayoutGrid, event.getScreenX(), event.getScreenY());
     }
-
 
 
     private void updateCell(int row, int column, int value) {
